@@ -1,0 +1,1478 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reading Quest - رِحْلَةُ الْقِرَاءَةِ</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Tajawal:wght@500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+  :root {
+    --bg: #f0f7ff;
+    --bg2: #ffffff;
+    --bg3: #e1f0ff;
+    --gold: #ffc107;
+    --gold2: #ff9800;
+    --green: #2ecc71;
+    --green2: #27ae60;
+    --red: #e74c3c;
+    --blue: #3498db;
+    --blue2: #2980b9;
+    --text: #2c3e50;
+    --muted: #7f8c8d;
+    --border: #d2e6f9;
+    --radius: 24px;
+  }
+  
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Amiri', serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    direction: rtl;
+  }
+
+  .progress-container { width: 100%; background: #e2e8f0; height: 16px; border-radius: 0; margin-bottom: 0; }
+  .progress-bar { width: 0%; height: 100%; background: var(--green); transition: 0.5s; border-radius: 0 8px 8px 0; }
+
+  .app {
+    max-width: 750px;
+    margin: 0 auto;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .header { text-align: center; padding: 1rem 0; }
+  .header h1 { font-family: 'Amiri', serif; font-size: 32px; font-weight: bold; color: var(--blue2); cursor: pointer; }
+  .score-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 16px; background: #fff9e6; border: 2px solid var(--gold); border-radius: 20px; font-size: 16px; font-family: 'Tajawal', sans-serif; color: var(--gold2); font-weight: 800; margin-top: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+
+  .top-nav { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 1rem; font-family: 'Tajawal', sans-serif; }
+  .nav-btn { padding: 10px 20px; border-radius: 14px; font-family: 'Tajawal', sans-serif; font-weight: bold; cursor: pointer; border: none; font-size: 14px; display: flex; align-items: center; gap: 6px; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+  .btn-back { background: var(--bg2); color: var(--text); border: 2px solid var(--border); display: none;}
+  .btn-back:hover { border-color: var(--blue); background: var(--bg3); }
+  .btn-home { background: #fdf2f2; color: var(--red); border: 2px solid #f9aca6; display: none;}
+  .btn-home:hover { background: #fbe3e3; }
+  .btn-teacher { background: #edf7ed; color: var(--green2); border: 2px solid #b7dfb9; }
+  .btn-teacher:hover { background: #dbf0db; }
+
+  .level-track { display: flex; align-items: center; justify-content: center; margin: 1.5rem 0; font-family: 'Tajawal', sans-serif; }
+  .level-node { display: flex; flex-direction: column; align-items: center; }
+  .level-circle { width: 50px; height: 50px; border-radius: 50%; border: 3px solid var(--border); background: var(--bg2); display: flex; align-items: center; justify-content: center; font-size: 20px; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+  .level-circle.active { border-color: var(--gold2); background: #fff9e6; transform: scale(1.1); box-shadow: 0 0 15px rgba(255,152,0,0.4); }
+  .level-circle.done { border-color: var(--green); background: #e8f9ee; }
+  .level-circle.locked { opacity: 0.5; }
+  .level-label { font-size: 13px; color: var(--muted); margin-top: 6px; font-weight: bold; }
+  .level-label.active-label { color: var(--blue2); font-weight: 900; }
+  .level-connector { flex: 1; height: 4px; background: var(--border); max-width: 60px; margin-bottom: 20px; }
+  .level-connector.done { background: var(--green); }
+
+  .motivation-box { background: linear-gradient(135deg, #fffcf0 0%, #fff5db 100%); border: 3px dashed var(--gold); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.5rem; text-align: center; box-shadow: 0 6px 12px rgba(0,0,0,0.02); }
+  .motivation-box h2 { font-family: 'Tajawal', sans-serif; font-size: 22px; color: var(--gold2); margin-bottom: 10px; }
+  .motivation-box p { font-size: 20px; line-height: 1.8; color: #4a5568; }
+
+  #difficulty-levels { display: flex; justify-content: center; gap: 12px; margin-bottom: 1.5rem; font-family: 'Tajawal', sans-serif; }
+  .btn-level { padding: 12px 24px; border-radius: 16px; border: 2px solid var(--border); background: var(--bg2); color: var(--text); font-family: 'Tajawal', sans-serif; cursor: pointer; font-weight: bold; font-size: 15px; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+  .btn-level:hover { border-color: var(--blue); background: var(--bg3); transform: translateY(-2px); }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .card { background: var(--bg2); border: 2px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.5rem; position: relative; box-shadow: 0 8px 16px rgba(0,0,0,0.03); }
+  .level-badge { display: inline-block; padding: 6px 14px; border-radius: 20px; font-size: 14px; font-weight: 700; font-family: 'Tajawal', sans-serif; margin-bottom: 1.25rem; }
+  .badge-green { background: #e8f9ee; color: var(--green2); }
+  .badge-blue { background: #e3f2fd; color: var(--blue2); }
+  .badge-yellow { background: #fff9e6; color: var(--gold2); }
+  .badge-red { background: #fdf2f2; color: var(--red); }
+
+  .story-visual { width: 100%; height: 160px; border-radius: 18px; display: flex; align-items: center; justify-content: center; margin-bottom: 1.25rem; font-size: 70px; background: linear-gradient(to bottom, #eef5fc, #d6e8f7); box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+  
+  .story-text { font-family: 'Amiri', serif; font-size: 28px; line-height: 2.3; color: #1a252f; text-align: right; margin-bottom: 1.25rem; background: #fcfdfe; border-radius: 16px; padding: 1.5rem; border-right: 6px solid var(--blue); box-shadow: 0 2px 6px rgba(0,0,0,0.02); }
+  
+  .story-line { display: block; transition: opacity 0.3s ease; margin-bottom: 8px; }
+  .story-line.focus-blur { opacity: 0.35; filter: blur(0.5px); }
+  
+  .story-word { cursor: pointer; display: inline-block; padding: 0 4px; border-radius: 6px; transition: 0.15s, transform 0.2s ease; }
+  .story-word:hover { background: #fff3cd; color: var(--gold2); }
+  
+  /* إضافة ميزة تكبير وتوضيح الكلمة النشطة بزيادة مقياس الحجم لدعم الانقرائية البصرية وتفادي تشتت المتعلم */
+  .story-word.reading-active { background: #ffe082; color: #000; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transform: scale(1.15); display: inline-block; }
+  
+  .punctuation { color: #ff5722; font-weight: bold; margin: 0 6px; font-size: 28px; display: inline-block; }
+
+  .audio-controls-group { display: flex; gap: 10px; align-items: center; margin-bottom: 1.25rem; font-family: 'Tajawal', sans-serif; }
+  .audio-player { flex: 1; display: flex; align-items: center; gap: 14px; background: #f0f7ff; border: 2px solid #cee3f8; border-radius: 16px; padding: 0.8rem 1.2rem; cursor: pointer; user-select: none; transition: 0.2s; }
+  .audio-player:hover { background: var(--bg3); }
+  .audio-play-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--blue); border: none; color: white; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; box-shadow: 0 4px 6px rgba(52,152,219,0.3); }
+  .audio-track { flex: 1; }
+  .audio-track-label { font-size: 14px; color: var(--blue2); font-weight: bold; margin-bottom: 6px; }
+  .audio-progress-bar { width: 100%; height: 6px; background: rgba(0,0,0,0.05); border-radius: 3px; overflow: hidden; }
+  .audio-progress-fill { width: 0%; height: 100%; background: var(--blue); transition: width 0.1s linear; }
+  
+  .btn-speed-toggle { padding: 0 14px; height: 40px; border-radius: 16px; border: 2px solid #cee3f8; background: var(--bg2); color: var(--blue2); font-weight: bold; font-size: 14px; cursor: pointer; transition: 0.2s; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
+  .btn-speed-toggle:hover { background: var(--bg3); border-color: var(--blue); }
+
+  .btn-teacher-model { font-family: 'Tajawal', sans-serif; padding: 0.8rem 1.8rem; border-radius: 30px; border: 2px solid var(--blue); background: #e3f2fd; color: var(--blue2); font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; margin-bottom: 15px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+  .btn-teacher-model:hover { background: var(--blue); color: white; }
+
+  .q-header-wrapper { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 10px; font-family: 'Tajawal', sans-serif; }
+  .q-label { font-size: 16px; color: var(--blue2); font-weight: bold; display: flex; align-items: center; gap: 6px; }
+  
+  .choices { display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.25rem; }
+  .choice { padding: 1rem 1.25rem; border-radius: 16px; border: 2px solid var(--border); background: var(--bg2); font-size: 24px; font-family: 'Amiri', serif; color: var(--text); cursor: pointer; text-align: right; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+  .choice:hover { border-color: var(--blue); background: var(--bg); transform: translateX(-4px); }
+  
+  .choice.correct { border-color: var(--green) !important; background: #e8f9ee !important; color: var(--green2) !important; font-weight: bold; }
+  .choice.wrong { border-color: #ffb300 !important; background: #fff8e1 !important; color: #b7791f !important; }
+
+  .blank-sentence { font-family: 'Amiri', serif; font-size: 26px; line-height: 2; color: var(--text); margin-bottom: 1.25rem; }
+  .blank { color: var(--blue); font-weight: bold; text-decoration: underline; background: #fff9e6; padding: 0 8px; border-radius: 6px; }
+  
+  .fill-options { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 1.25rem; }
+  .fill-opt { padding: 0.8rem 1.5rem; border-radius: 14px; border: 2px solid var(--border); background: var(--bg2); cursor: pointer; color: var(--text); font-family: 'Amiri', serif; font-size: 22px; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+  .fill-opt:hover { border-color: var(--blue); background: var(--bg3); }
+  .fill-opt.correct { border-color: var(--green) !important; background: #e8f9ee !important; color: var(--green2) !important; font-weight: bold; }
+  .fill-opt.wrong { border-color: #ffb300 !important; background: #fff8e1 !important; color: #b7791f !important; }
+
+  .order-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.25rem; }
+  .order-item { padding: 0.8rem 1.25rem; border-radius: 16px; border: 2px solid var(--border); background: var(--bg2); font-family: 'Amiri', serif; font-size: 24px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+  .order-item.correct-pos { border-color: var(--green); background: #e8f9ee; color: var(--green2); }
+  .order-right-side { display: flex; align-items: center; gap: 12px; }
+  .order-num { width: 30px; height: 30px; border-radius: 50%; background: var(--bg3); border: 2px solid var(--blue); display: flex; align-items: center; justify-content: center; font-size: 15px; font-family: 'Tajawal'; color: var(--blue2); font-weight: bold; }
+  .move-btns { display: flex; gap: 6px; }
+  .move-btn { width: 34px; height: 34px; border: none; border-radius: 10px; background: var(--bg3); color: var(--blue2); font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+  .move-btn:hover { background: var(--blue); color: white; }
+
+  .record-zone { border: 3px dashed var(--blue); border-radius: var(--radius); padding: 1.75rem; text-align: center; margin-bottom: 1.25rem; display: flex; flex-direction: column; align-items: center; background: #fafcfe; }
+  .read-sentence { font-family: 'Amiri', serif; font-size: 28px; line-height: 2; color: var(--blue2); font-weight: bold; margin-bottom: 1.25rem; text-align: center; }
+  .record-btn { font-family: 'Tajawal', sans-serif; padding: 12px 28px; border-radius: 30px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; background: var(--gold2); color: white; transition: 0.3s; box-shadow: 0 4px 10px rgba(255,152,0,0.3); }
+  .record-btn.recording { background: var(--red); box-shadow: 0 4px 10px rgba(231,76,60,0.4); animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.03); opacity: 0.85; } 100% { transform: scale(1); opacity: 1; } }
+
+  .feedback-box { padding: 1.2rem; border-radius: 16px; font-size: 18px; font-weight: bold; font-family: 'Tajawal', sans-serif; margin-bottom: 1.25rem; display: none; line-height: 1.6; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.02); min-height: 50px; }
+  .feedback-box.show { display: block !important; }
+  .feedback-box.success { background: #e8f9ee !important; border: 2px solid var(--green) !important; color: var(--green2) !important; }
+  .feedback-box.error { background: #fffcf0 !important; border: 2px solid #ffc107 !important; color: #b7791f !important; }
+  .feedback-box.info { background: #e3f2fd !important; border: 2px solid #90caf9 !important; color: var(--blue2) !important; }
+
+  .btn-primary { font-family: 'Tajawal', sans-serif; width: 100%; padding: 1rem; border-radius: 16px; border: none; background: var(--green); color: white; font-size: 18px; font-weight: bold; cursor: pointer; display: none; text-align: center; box-shadow: 0 4px 8px rgba(46,204,113,0.3); transition: 0.2s; }
+  .btn-primary:hover { background: var(--green2); transform: translateY(-2px); }
+  .btn-primary.show { display: block; }
+  .btn-check { font-family: 'Tajawal', sans-serif; padding: 10px 24px; border-radius: 12px; border: none; background: var(--blue); color: white; cursor: pointer; font-weight: bold; font-size: 15px; margin-bottom: 1.25rem; box-shadow: 0 4px 6px rgba(52,152,219,0.2); }
+
+  .final-screen { text-align: center; padding: 2.5rem 1.5rem; }
+  .trophy { font-size: 80px; margin-bottom: 0.75rem; display: block; animation: bounce 2s infinite; }
+  @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+  .stars-row { font-size: 40px; margin-bottom: 1.25rem; color: var(--gold); }
+  
+  #readingTimer { font-family: 'Tajawal', sans-serif; margin-top:10px; padding:10px; border-radius:12px; background:#fdf2f2; border:2px solid #f9aca6; text-align:center; font-weight:bold; color:var(--red); font-size: 15px; display: none; }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 1.5rem; font-family: 'Tajawal', sans-serif; }
+  .stat-card { background: linear-gradient(135deg, #ffffff 0%, #f4f9ff 100%); border: 2px solid var(--border); padding: 14px; border-radius: 16px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+  .stat-card .value { font-size: 24px; font-weight: 900; color: var(--blue2); margin-bottom: 4px; }
+  .stat-card .label { font-size: 13px; color: var(--muted); font-weight: bold; }
+  
+  .chart-wrapper { width: 100%; background: #ffffff; border: 2px solid var(--border); padding: 15px; border-radius: 20px; margin-bottom: 1.5rem; height: 280px; display: flex; justify-content: center; }
+  
+  .teacher-actions { display: flex; gap: 10px; margin-bottom: 1.5rem; flex-wrap: wrap; font-family: 'Tajawal', sans-serif; }
+  .btn-action { flex: 1; padding: 12px; border-radius: 14px; font-weight: bold; font-size: 14px; cursor: pointer; border: none; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: 0.2s; min-width: 150px; }
+  .btn-export { background: var(--green); color: white; }
+  .btn-export:hover { background: var(--green2); }
+  .btn-clear-all { background: #fdf2f2; color: var(--red); border: 2px solid #f9aca6; }
+  .btn-clear-all:hover { background: #fbe3e3; }
+
+  .btn-delete-row { background: #fdf2f2; border: 1px solid #f9aca6; color: var(--red); font-size: 14px; cursor: pointer; padding: 6px 12px; border-radius: 8px; transition: 0.2s; font-family: 'Tajawal', sans-serif; font-weight: bold; }
+  .btn-delete-row:hover { background: var(--red); color: white; transform: scale(1.05); }
+</style>
+</head>
+<body>
+
+<div class="progress-container">
+  <div class="progress-bar" id="myProgressBar"></div>
+</div>
+
+<div class="app">
+
+  <div class="header">
+    <h1 id="appTitle">رحلة القراءة</h1>
+    <div class="score-chip">⭐ النِّقَاطُ: <span id="scoreNum">0</span></div>
+  </div>
+
+  <div class="top-nav" id="topNav">
+    <div style="display: flex; gap: 8px;">
+      <button class="nav-btn btn-back" id="btnBack" onclick="actionGoBack()">⬅️ الرُّجُوعُ</button>
+      <button class="nav-btn btn-home" id="btnHome" onclick="actionEndGame()">🏠 إِنْهَاءُ اللَّعِبِ</button>
+    </div>
+    <button id="teacherBtn" class="nav-btn btn-teacher" onclick="openTeacherDashboard()" style="display:none;">🎓 سِجِلُّ الْأُسْتَاذَةِ</button>  
+  </div>
+
+  <div class="level-track" id="levelTrack">
+    <div class="level-node"><div class="level-circle active" id="lc0">🟢</div><div class="level-label active-label" id="ll0">الْبِدَايَةُ</div></div>
+    <div class="level-connector" id="con0"></div>
+    <div class="level-node"><div class="level-circle locked" id="lc1">🔵</div><div class="level-label" id="ll1">الْمُسَاعَدَةُ</div></div>
+    <div class="level-connector" id="con1"></div>
+    <div class="level-node"><div class="level-circle locked" id="lc2">🟡</div><div class="level-label" id="ll2">التَّحَدِّي</div></div>
+    <div class="level-connector" id="con2"></div>
+    <div class="level-node"><div class="level-circle locked" id="lc3">🔴</div><div class="level-label" id="ll3">التَّمَيُّزُ</div></div>
+  </div>
+
+   <div class="screen active" id="screenLogin">
+    <div class="card" style="text-align: center; padding: 2.5rem 1.5rem;">
+      <h2 style="color: var(--blue2); margin-bottom: 15px; font-family: 'Tajawal'; font-weight: 900;">🦁 مَرْحَبَاً بِكَ فِي مُغَامَرَةِ الْقِرَاءَةِ 🦁</h2>
+      <p style="margin-bottom: 20px; font-size: 18px; color: var(--text); font-family: 'Tajawal';">يُرْجَى إِدْخَالُ اسْمِكَ الْكَامِلِ لِبَدْءِ التَّحَدِّي الرَّقْمِيِّ:</p>
+      <input type="text" id="studentName" placeholder="✍️ اكْتُبِ اسْمَكَ الْكَامِلَ هُنَا..." dir="rtl" style="width: 100%; padding: 14px; border-radius: 16px; border: 2px solid var(--border); background: var(--bg); color: var(--text); font-family: 'Tajawal'; font-size: 18px; margin-bottom: 25px; text-align: center; outline: none; font-weight: bold;">
+      <button onclick="startSession()" class="btn-primary show" style="width: 60%; margin: 0 auto;">🚀 ابْدَأِ الْمُغَامَرَةَ</button>
+    </div>
+  </div>
+
+  <div class="screen" id="screen0">
+    <div class="motivation-box" id="motivationBox">
+      <h2>🏆 نِدَاءٌ إِلَى الْأَبْطَالِ الشُّجْعَانِ! 🏆</h2>
+      <p>مَلِكُ الْغَابَةِ الْعَظِيمُ فِي مَأْزَقٍ كَبِيرٍ دَاخِلَ الْحُفْرَةِ، وَهُوَ يَنْتَظِرُ ذَكَاءَكَ وَقُدْرَتَكَ الْمُتَمَيِّزَةَ عَلَى الْقِرَاءَةِ السَّرِيعَةِ لِإِنْقَاذِهِ! اخْتَرْ مُسْتَوَاكَ الْمُفَضَّلَ مِنَ الْأَزْرَارِ بِالْأَسْفَلِ، وَابْدَأْ رِحْلَةَ التَّحَدِّي وَالطَّلَاقَةِ الْآنَ!</p>
+    </div>
+
+    <div id="difficulty-levels">
+      <button onclick="setDifficulty('easy')" class="btn-level">مُسْتَوَى سَهْلٌ 🟢</button>
+      <button onclick="setDifficulty('medium')" class="btn-level">مُسْتَوَى مُتَوَسِّطٌ 🟡</button>
+      <button onclick="setDifficulty('hard')" class="btn-level">مُسْتَوَى التَّحَدِّي 🔴</button>
+    </div>
+
+    <div class="card" id="storyCard0" style="display:none;">
+      <div class="level-badge badge-green">🧩 الْمَرْحَلَةُ ١ — الْبِدَايَةُ</div>
+      <div class="story-visual">🦁🕳️</div>
+      <div class="story-text" id="storyText0"></div>
+      
+      <div class="audio-controls-group">
+        <div class="audio-player" onclick="togglePlayAudio('story0')">
+          <button class="audio-play-btn" id="playBtn_story0">▶</button>
+          <div class="audio-track">
+            <div class="audio-track-label" id="audioLabel_story0">🎧 اسْتَمِعْ إِلَى قِصَّةِ الْبَدْءِ</div>
+            <div class="audio-progress-bar"><div class="audio-progress-fill" id="audioFill_story0"></div></div>
+          </div>
+        </div>
+        <button class="btn-speed-toggle" id="speedBtn_story0" onclick="toggleSpeed()">سرعة: 1x</button>
+      </div>
+      <div id="readingTimer">⏳ الْوَقْتُ الْمُتَبَقِّي: <span id="timerNum">20</span> ثَانِيَةً</div>
+    </div>
+
+    <div class="card" id="challengeCard0" style="display:none;">
+      <div id="visualChallenge" style="display:none;">
+        <div class="q-header-wrapper">
+          <div class="q-label">👀 تَحَدِّي التَّمْيِيزِ الْبَصَرِيِّ</div>
+        </div>
+        <p style="margin-bottom: 12px; font-size:22px; font-family:'Amiri', serif; font-weight: bold;">اخْتَرِ الْكَلِمَةَ الصَّحِيحَةَ الْمُطَابِقَةَ تَمَاماً لِمَا وَرَدَ فِي نَصِّ الْقِصَّةِ:</p>
+        <div class="choices" id="visualChoices"></div>
+        <div class="feedback-box" id="visualFb"></div>
+      </div>
+      
+      <div id="comprehensionQ" style="display:none; margin-top:15px;"></div>
+      
+      <div id="memoryChallenge" style="display:none; margin-top:15px;">
+        <div class="q-header-wrapper">
+           <h3 style="font-family: 'Tajawal'; font-size:18px; color: var(--blue2);">🧠 تَحَدِّي الذَّاكِرَةِ الْقَوِيَّةِ</h3>
+        </div>
+        <p style="margin: 12px 0; font-size: 24px; font-family: 'Amiri', serif; font-weight: bold;">مَنِ الْحَيَوَانُ الَّذِي سَقَطَ فِي الْحُفْرَةِ؟</p>
+        <div class="choices" id="memoryChoices">
+          <div class="choice" onclick="checkMemory(this, false)">الْأَرْنَبُ</div>
+          <div class="choice" onclick="checkMemory(this, true)">الْأَسَدُ</div>
+          <div class="choice" onclick="checkMemory(this, false)">الْقِرْدُ</div>
+        </div>
+        <div class="feedback-box" id="memoryFb"></div>
+      </div>
+
+      <button class="btn-primary" id="next0" onclick="goLevel(1)">انْتَقِلْ إِلَى الْمَرْحَلَةِ التَّالِيَةِ 🚀</button>
+    </div>
+  </div>
+
+  <div class="screen" id="screen1">
+    <div class="card">
+      <div class="level-badge badge-blue">🧩 الْمَرْحَلَةُ ٢ — الْمُسَاعَدَةُ</div>
+      <div class="story-visual">🐰🦁</div>
+      <div class="story-text" id="storyText1"></div>
+      
+      <div class="audio-controls-group">
+        <div class="audio-player" onclick="togglePlayAudio('story1')">
+          <button class="audio-play-btn" id="playBtn_story1">▶</button>
+          <div class="audio-track">
+            <div class="audio-track-label" id="audioLabel_story1">🎧 اسْتَمِعْ إِلَى قِصَّةِ الْمُسَاعَدَةِ</div>
+            <div class="audio-progress-bar"><div class="audio-progress-fill" id="audioFill_story1"></div></div>
+          </div>
+        </div>
+        <button class="btn-speed-toggle" id="speedBtn_story1" onclick="toggleSpeed()">سرعة: 1x</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="q-header-wrapper">
+        <div class="q-label">❓ أَكْمِلِ الْجُمْلَةَ بِالْكَلِمَةِ الصَّحِيحَةِ سِيَاقِيّاً</div>
+      </div>
+      <p class="blank-sentence" id="blankSentence1"></p>
+      <div class="fill-options" id="fo1"></div>
+      <div class="feedback-box" id="fb1"></div>
+      <button class="btn-primary" id="next1" onclick="goLevel(2)">انْتَقِلْ إِلَى التَّحَدِّي 🏆</button>
+    </div>
+  </div>
+
+  <div class="screen" id="screen2">
+    <div class="card">
+      <div class="level-badge badge-yellow">🧩 الْمَرْحَلَةُ ٣ — التَّحَدِّي</div>
+      <div class="story-visual">🐻🐺🦁</div>
+      <div class="story-text" id="storyText2"></div>
+      
+      <div class="audio-controls-group">
+        <div class="audio-player" onclick="togglePlayAudio('story2')">
+          <button class="audio-play-btn" id="playBtn_story2">▶</button>
+          <div class="audio-track">
+            <div class="audio-track-label" id="audioLabel_story2">🎧 اسْتَمِعْ إِلَى قِصَّةِ التَّحَدِّي</div>
+            <div class="audio-progress-bar"><div class="audio-progress-fill" id="audioFill_story2"></div></div>
+          </div>
+        </div>
+        <button class="btn-speed-toggle" id="speedBtn_story2" onclick="toggleSpeed()">سرعة: 1x</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="q-header-wrapper">
+        <div class="q-label">❓ رَتِّبِ الْأَحْدَاثَ حَسَبَ تَسَلْسُلِهَا الْمَنْطِقِيِّ وَالزَّمَنِيِّ</div>
+      </div>
+      <div class="order-list" id="orderList"></div>
+      <button class="btn-check" onclick="checkOrder()">تَحَقَّقْ مِنَ التَّرْتِيبِ</button>
+      <div class="feedback-box" id="fb2"></div>
+      <button class="btn-primary" id="next2" onclick="goLevel(3)">انْتَقِلْ إِلَى مَرْحَلَةِ التَّمَيُّزِ 🌟</button>
+    </div>
+  </div>
+
+  <div class="screen" id="screen3">
+    <div class="card">
+      <div class="level-badge badge-red">🧩 الْمَرْحَلَةُ ٤ — التَّمَيُّزُ 💥</div>
+      <div class="story-visual">🦁✨🎤</div>
+      <div class="story-text" id="storyText3"></div>
+      
+      <div class="audio-controls-group">
+        <div class="audio-player" onclick="togglePlayAudio('story3')">
+          <button class="audio-play-btn" id="playBtn_story3">▶</button>
+          <div class="audio-track">
+            <div class="audio-track-label" id="audioLabel_story3">🎧 اسْتَمِعْ إِلَى قِصَّةِ الْخَاتِمَةِ</div>
+            <div class="audio-progress-bar"><div class="audio-progress-fill" id="audioFill_story3"></div></div>
+          </div>
+        </div>
+        <button class="btn-speed-toggle" id="speedBtn_story3" onclick="toggleSpeed()">سرعة: 1x</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="q-header-wrapper">
+        <div class="q-label">🎤 تَحَدِّي الْمُحَاكَاةِ الصَّوْتِيَّةِ</div>
+      </div>
+      
+      <div class="record-zone" id="recZone">
+        <div class="read-sentence" id="readSentenceTarget"></div>
+        <button class="btn-teacher-model" id="btnTeacherModel" onclick="playTeacherModel()">🎧 اسْتَمِعْ لِقِرَاءَةِ الْأُسْتَاذَةِ النَّمُوذَجِيَّةِ</button>
+        <div style="margin-top: 10px; margin-bottom: 10px; width: 100%; height: 1px; background: var(--border);"></div>
+        <button class="record-btn" id="recBtn" onclick="toggleRecord()">🔴 ابْدَأْ تَسْجِيلَ قِرَاءَتِكَ (مُحَاكَاةٌ)</button>
+        <p style="margin-top: 10px; font-size: 15px; color: var(--muted); font-family: 'Tajawal';" id="recStatus">اقْرَأِ الْجُمْلَةَ بِوُضُوحٍ كَمَا سَمِعْتَهَا لِيَتِمَّ حِفْظُهَا لِلْأُسْتَاذَةِ.</p>
+        <div class="feedback-box" id="fb3"></div>
+      </div>
+      <button class="btn-primary" id="next3" onclick="showFinal()">🏆 إِنْهَاءُ الْمُغَامَرَةِ وَاسْتِلَامُ الْجَائِزَةِ</button>
+    </div>
+  </div>
+
+  <div class="screen" id="screenFinal">
+    <div class="card final-screen">
+      <span class="trophy">🏆</span>
+      <h2 style="color: var(--gold2); margin-bottom: 10px; font-family: 'Tajawal'; font-weight: 900;">مَبْرُوكٌ يَا بَطَل(ة)! لَقَدْ أَنْقَذْتَ الْأَسَدَ!</h2>
+      <p style="margin-bottom: 15px; font-size: 20px;">أَتْمَمْتَ كَامِلَ مُسْتَوَيَاتِ رِحْلَةِ الِانْقِرَائِيَّةِ بِنَجَاحٍ مُدْهِشٍ.</p>
+      <div class="stars-row" id="finalStars">⭐⭐⭐⭐</div>
+      <div style="font-size: 22px; font-weight: bold; color: var(--green2); margin-bottom: 20px; font-family: 'Tajawal';" id="finalScore"></div>
+      <button onclick="restartGameWithoutName()" style="padding: 12px 30px; border-radius: 20px; border: none; background: var(--gold2); color: white; font-family: 'Tajawal'; font-weight: bold; font-size: 16px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">🔄 الْعَبْ مُجَدَّداً</button>
+    </div>
+  </div>
+
+  <div class="screen" id="screenTeacher">
+    <div class="card">
+      <h2 style="color: var(--blue2); margin-bottom: 15px; border-bottom: 2px solid var(--border); padding-bottom: 10px; font-family: 'Tajawal'; font-weight: 900;">🎓 لَوْحَةُ تَحَكُّمِ الْأُسْتَاذَةِ وَالْإِحْصَائِيَّاتِ</h2>
+      
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="value" id="statTotal">0</div>
+          <div class="label">إِجْمَالِي الْمُحَاوَلَاتِ</div>
+        </div>
+        <div class="stat-card">
+          <div class="value" id="statAvgScore">0</div>
+          <div class="label">مُتَوَسِّطُ النِّقَاطِ</div>
+        </div>
+        <div class="stat-card">
+          <div class="value" id="statSuccess">0%</div>
+          <div class="label">نِسْبَةُ النَّجَاحِ</div>
+        </div>
+      </div>
+
+      <div class="chart-wrapper">
+        <canvas id="levelDistributionChart"></canvas>
+      </div>
+
+      <div class="teacher-actions">
+        <button class="btn-action btn-export" onclick="exportRecordsToCSV()">📥 تَحْمِيلُ التَّقْرِيرِ كَـ (Excel / CSV)</button>
+        <button class="btn-action btn-clear-all" onclick="clearRecords()">🗑️ حَذْفُ كُلِّ التَّسْجِيلَاتِ</button>
+      </div>
+
+      <h3 style="color: var(--blue2); font-family: 'Tajawal'; margin-bottom: 10px; font-size: 16px;">📋 تفاصيل نتائج نتائج المتعلمين والتسجيلات الصوتية:</h3>
+      <div id="recordsContainer"></div>
+      
+      <button onclick="closeTeacherDashboard()" style="margin-top: 15px; background: var(--bg); color: var(--text); border: 2px solid var(--border); padding: 10px 20px; border-radius: 12px; cursor: pointer; font-family: 'Tajawal'; font-weight:bold;">⬅️ عَوْدَةٌ لِلَّعِبِ</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let state = { currentLevel: 0, correctCount: 0, difficulty: 'easy', orderAttempts: 0, studentName: "", audioRate: 1.0, startTime: Date.now() };
+let timer;
+let timeLeft = 20;
+
+let currentAudioElement = null;
+let currentPlayingKey = null; 
+let visualDone = false;
+let compDone = false;
+let memoryDone = false;
+
+let mediaRecorder;
+let audioChunks = [];
+let isRecording = false;
+let hasRecorded = false;
+
+let highlightInterval = null;
+let levelChartInstance = null; 
+
+const errorFeedbackPool = [
+    "💡 خَطَأٌ صَغِيرٌ لَا يَهُمُّ! أَعِدِ الْقِرَاءةَ بِتَمَعُّنٍ وَسَتَكْتَشِفُ الْجَوَابَ الصَّحِيحَ رَأْساً.",
+    "✨ الْخَطَأُ خُطْوَةٌ نَحْوَ التَّعَلُّمِ! حَاوِلْ مُجَدَّداً يَا بَطَلُ، أَنْتَ ذَكِيٌّ وَقَادِرٌ.",
+    "🦁 مَلِكُ الْغَابَةِ يَثِقُ فِي ذَكَائِكَ! أَعِدْ تَجْرِبَةَ خِيَارٍ آخَرَ لِتُنْقِذَهُ بِنَجَاحٍ.",
+    "🎯 لَا تَقْلَق، فَالْعُلَمَاءُ يَتَعَلَّمُونَ مِنْ أَخْطَائِهِمْ! رَكِّزْ جَيِّداً فِي السَّطْرِ وَاخْتَرْ مَرَّةً أُخْرَى."
+];
+
+function getErrorFeedback() {
+    return errorFeedbackPool[Math.floor(Math.random() * errorFeedbackPool.length)];
+}
+
+const levelData = {
+  easy: {
+    audio_story0: "audio/easy_story0.mp3",
+    audio_story1: "audio/easy_story1.mp3",
+    audio_story2: "audio/easy_story2.mp3",
+    audio_story3: "audio/easy_story3.mp3",
+    audio_model: "audio/easy_q1.mp3", 
+    levelName: "مُسْتَوَى سَهْلٌ",
+    story0: "كَانَ أَسَدٌ يَعِيشُ فِي الْغَابَةِ <span class='punctuation'>.</span>|فِي يَوْمٍ مِنَ الْأَيَّامِ <span class='punctuation'>،</span> سَقَطَ فِي حُفْرَةٍ عَمِيقَةٍ|وَلَا يَسْتَطِيعُ الْخُرُوجَ مِنْهَا <span class='punctuation'>.</span>",
+    story1: "مَرَّ أَرْنَبٌ صَغِيرٌ بِجَانِبِ الْحُفْرَةِ <span class='punctuation'>،</span>|فَسَمِعَ صَوْتَ الْأَسَدِ يَسْتَغِيثُ <span class='punctuation'>.</span>|اقْتَرَبَ مِنْهُ وَسَأَلَهُ بِلُطْفٍ <span class='punctuation'>:</span> مَاذَا حَدَثَ يَا مَلِكَ الْغَابَةِ؟|فَقَالَ الْأَسَدُ حَزِيناً <span class='punctuation'>:</span> سَاعِدْنِي مِنْ فَضْلِكَ <span class='punctuation'>.</span>",
+    blank1: "سَاعِدْنِي مِنْ ________",
+    opts1: [
+      {text: "كِتَابٌ", correct: false},
+      {text: "فَضْلِكَ", correct: true},
+      {text: "مَدْرَسَةٌ", correct: false}
+    ],
+    story2: "سَارَعَ الْأَرْنَبُ الطَّيِّبُ وَنَادَى بَاقِي حَيَوَانَاتِ الْغَابَةِ|لِتَقْدِيمِ الْعَوْنِ <span class='punctuation'>،</span>|وَتَجَمَّعُوا سَرِيعاً لِيُفَكِّرُوا فِي طَرِيقَةٍ ذَكِيَّةٍ لِإِنْقَاذِهِ <span class='punctuation'>.</span>",
+    order2: [
+      {text: "جَاءَ الْأَرْنَبُ وَسَمِعَ اسْتِغَاثَةَ الْأَسَدِ", order: 1},
+      {text: "سَقَطَ الْأَسَدُ فِي الْحُفْرَةِ الْعَمِيقَةِ", order: 0},
+      {text: "تَعَاوَنَتْ حَيَوَانَاتُ الْغَابَةِ لِإِنْقَاذِ الْأَسَدِ", order: 2}
+    ],
+    story3: "خَرَجَ الْأَسَدُ مِنَ الْحُفْرَةِ فَرِحاً بِفَضْلِ الِاتِّحَادِ <span class='punctuation'>،</span>|وَشَكَرَ أَصْدِقَاءَهُ الْأَوْفِيَاءَ |وَقَالَ لَهُمْ <span class='punctuation'>:</span> التَّعَاوُنُ قُوَّةٌ لَا تُقْهَرُ <span class='punctuation'>.</span>",
+    sentence3: "تَعَاوَنَ الْأَصْدِقَاءُ لِإِنْقَاذِ الْأَسَدِ",
+    compQuestion: "أَيْنَ سَقَطَ الْأَسَدُ ؟",
+    compChoices: [
+      {text:"فِي النَّهْرِ", correct:false},
+      {text:"فِي الْحُفْرَةِ", correct:true},
+      {text:"فِي الْبَيْتِ", correct:false}
+    ]
+  },
+  medium: {
+    audio_story0: "audio/easy_story0.mp3",
+    audio_story1: "audio/easy_story1.mp3",
+    audio_story2: "audio/easy_story2.mp3",
+    audio_story3: "audio/easy_story3.mp3",
+    audio_model: "audio/easy_story0.mp3",
+    levelName: "مُسْتَوَى مُتَوَسِّطٌ",
+    story0: "بَيْنَمَا كَانَ الْأَسَدُ <span class='punctuation'>،</span> مَلِكُ الْغَابَةِ <span class='punctuation'>،</span>|يَتَجَوَّلُ بَيْنَ الْأَشْجَارِ الْكَثِيفَةِ <span class='punctuation'>،</span>|سَقَطَ فَجْأَةً فِي حُفْرَةٍ عَمِيقَةٍ وَمَخْفِيَّةٍ|لَمْ يَنْتَبِهْ لَهَا أَبَداً <span class='punctuation'>.</span>",
+    visualOpts: [
+      {text: "الْحَفْلَةِ", correct: false},
+      {text: "الْحُفْرَةِ", correct: true},
+      {text: "الْحُجْرَةِ", correct: false}
+    ],
+    story1: "سَمِعَ السِّنْجَابُ الذَّكِيُّ صُرَاخَ الْأَسَدِ الْمَذْعُورِ|مِنَ الْأَسْفَلِ <span class='punctuation'>.</span> أَسْرَعَ نَحْوَهُ |وَهُوَ يُفَكِّرُ بِجِدِّيَّةٍ فِي خُطَّةٍ حَكِيمَةٍ|تَقِيهِ شَرَّ الْمَخَاطِرِ وَتُخْرِجُهُ بِسَلَامٍ <span class='punctuation'>.</span>",
+    blank1: "سَمِعَ السِّنْجَابُ صُرَاخَ الْأَسَدِ ________",
+    opts1: [
+      {text: "الْمَسْرُورِ", correct: false},
+      {text: "الْمَدْعُورِ", correct: true},
+      {text: "الْمَشْهُورِ", correct: false}
+    ],
+    story2: "لَمْ يَتَرَدَّدِ السِّنْجَابُ <span class='punctuation'>،</span>|بَلِ اسْتَدْعَى الْفِيلَ الْقَوِيَّ وَالْقِرْدَ الْمَرِنَ |وَبَدَأُوا فِي تَطْبِيقِ خُطَّةٍ مُتَمَاسِكَةٍ|لِرَفْعِهِ مِنْ قَاعِ الْحُفْرَةِ السَّحِيقَةِ <span class='punctuation'>.</span>",
+    order2: [
+      {text: "طَلَبَ السِّنْجَابُ الْمُسَانَدَةَ مِنَ الْفِيلِ وَالْقِرْدِ", order: 1},
+      {text: "رَصْدُ السِّنْجَابِ لِمَأْزِقِ مَلِكِ الْغَابَةِ", order: 0},
+      {text: "إِخْرَاجُ الْأَسَدِ بِفَضْلِ الْقُوَّةِ الْمُشْتَرَكَةِ", order: 2}
+    ],
+    story3: "نَفَضَ الْأَسَدُ الْغُبَارَ عَنْ فَرْوَتِهِ |مُعْلِناً بِامْتِنَانٍ أَمَامَ جَمِيعِ الْحَاضِرِينَ|أَنَّ التَّعَاوُنَ هُوَ السِّلَاحُ الْأَقْوَى فِي الْمَوَاقِفِ الْحَرِجَةِ <span class='punctuation'>.</span>",
+    sentence3: "التَّعَاوُنُ هُوَ السِّلَاحُ الْأَقْوَى فِي الْمَوَاقِفِ الْحَرِجَةِ",
+    compQuestion: "مَاذَا كَانَ يَفْعَلُ الْأَسَدُ قَبْلَ سُقُوطِهِ ؟",
+    compChoices: [
+      {text:"مُسْتَلْقِياً يَنَامُ", correct:false},
+      {text:"يَتَجَوَّلُ بَيْنَ الْأَشْجَارِ", correct:true},
+      {text:"يَشْرَبُ عِنْدَ النَّهْرِ", correct:false}
+    ]
+  },
+  hard: {
+    audio_story0: "audio/hard_story0.mp3",
+    audio_story1: "audio/hard_story1.mp3",
+    audio_story2: "audio/hard_story2.mp3",
+    audio_story3: "audio/hard_story3.mp3",
+    audio_model: "audio/hard_model.m4a", 
+    levelName: "مُسْتَوَى التَّحَدِّي",
+    story0: "تَعَثَّرَ هِزْبَرُ الْغَابَةِ فِي شَرَكٍ مَحْبُوكٍ|نَصَبَهُ قَنَّاصٌ مُحْتَرِفٌ <span class='punctuation'>،</span>|فَبَاتَ سَجِينَ الْمَصْيَدَةِ الْمُحْكَمَةِ|يُقَاوِمُ الْأَغْلَالَ دُونَ جَدْوَى <span class='punctuation'>.</span>",
+    visualOpts: [
+      {text: "شَبَكٍ مَفْكُوكٍ", correct: false},
+      {text: "شَرَكٍ مَحْبُوكٍ", correct: true},
+      {text: "شَرِيكٍ مَبْرُوكٍ", correct: false}
+    ],
+    story1: "لَمْ تَكُنْ نَجَاةُ الْهِزْبَرِ مِنْ قَبْضَةِ الصَّيَّادِ أَمْراً هَيِّناً <span class='punctuation'>،</span>|بَلْ تَطَلَّبَتْ لِزَاماً تَظَافُرَ جُهُودِ الْحَيَوَانَاتِ قَاطِبَةً|كَيْ لَا يَقَعَ الْجَمِيعُ فَرِيسَةً لِلْعَاصِبِ <span class='punctuation'>.</span>",
+    blank1: "نَصَبَ الشَّرَكَ الْمَحْبُوكَ ________ مُحْتَرِفٌ",
+    opts1: [
+      {text: "أَرْنَبٌ", correct: false},
+      {text: "قَنَّاصٌ", correct: true},
+      {text: "سِنْجَابٌ", correct: false}
+    ],
+    story2: "اجْتَمَعَتِ الْجَوَارِحُ وَالسِّبَاعُ فِي حِلْفٍ سَرِيعٍ|لِقَطْعِ الْحِبَالِ السَّمِيكَةِ|وَمُبَاغَتَةِ الصَّيَّادِ قَبْلَ فَوَاتِ الْأَوَانِ <span class='punctuation'>.</span>",
+    order2: [
+      {text: "تَقْيِيدُ الْأَسَدِ دَاخِلَ الْمَصْيَدَةِ الْمُحْكَمَةِ", order: 1},
+      {text: "وقُوعُ مَلِكِ الْغَابَةِ فِي شَرَكِ الْقَنَّاصِ", order: 0},
+      {text: "تَحَالُفُ السِّبَاعِ وَالْجَوَارِحِ لِمُبَاغَتَةِ الصَّيَّادِ", order: 2}
+    ],
+    story3: "أَعْلَنَ الْأَسَدُ بِامْتِنَانٍ أَنَّ التَّعَاوُنَ هُوَ السِّلَاحُ الْأَقْوَى <span class='punctuation'>،</span>|وَأَنَّ الْعَزِيمَةَ الصَّادِقَةَ وَالِاتِّحَادَ|هُمَا دِرْعُ الْأَمَانِ لِجَمِيعِ سُكَّانِ الْغَابَةِ <span class='punctuation'>.</span>",
+    sentence3: "الْعَزِيمَةُ الصَّادِقَةُ وَالِاتِّحَادُ هُمَا دِرْعُ الْأَمَانِ",
+    compQuestion: "مَنْ الَّذِي نَصَبَ الشَّرَكَ لِلْهِزْبَرِ؟",
+    compChoices: [
+      {text:"صَيَّادٌ هَاوٍ", correct:false},
+      {text:"قَنَّاصٌ مُحْتَرِفٌ", correct:true},
+      {text:"حَيَوَانَاتُ الْغَابَةِ", correct:false}
+    ]
+  }
+};
+
+function هندسةالنصالتفاعلي(textBlock) {
+    let lines = textBlock.split('|');
+    let outputHTML = "";
+    lines.forEach((lineText, lineIdx) => {
+        outputHTML += `<span class="story-line" id="line_${lineIdx}">`;
+        let parts = lineText.split(/(<[^>]+>)/g);
+        parts.forEach(part => {
+            if (part.startsWith('<')) {
+                outputHTML += part; 
+            } else {
+                let words = part.split(/(\s+)/);
+                words.forEach(word => {
+                    if (word.trim().length > 0) {
+                        outputHTML += `<span class="story-word">${word}</span>`;
+                    } else {
+                        outputHTML += word;
+                    }
+                });
+            }
+        });
+        outputHTML += `</span>`;
+    });
+    return outputHTML;
+}
+
+function togglePlayAudio(key) {
+  const data = levelData[state.difficulty];
+  const audioUrl = data['audio_' + key];
+  const playBtn = document.getElementById('playBtn_' + key);
+  const progressFill = document.getElementById('audioFill_' + key);
+
+  if (currentAudioElement && currentPlayingKey === key) {
+    if (!currentAudioElement.paused) {
+      currentAudioElement.pause();
+      playBtn.innerText = "▶";
+      clearInterval(highlightInterval);
+    } else {
+      currentAudioElement.playbackRate = state.audioRate;
+      currentAudioElement.play();
+      playBtn.innerText = "⏸️";
+      بدءالمزامنةالبصريةالذكية(key);
+    }
+    return;
+  }
+
+  stopCurrentAudio();
+
+  currentAudioElement = new Audio(audioUrl);
+  currentAudioElement.playbackRate = state.audioRate;
+  currentPlayingKey = key;
+  playBtn.innerText = "⏸️";
+
+  currentAudioElement.play().catch(err => {
+      console.log("تعذر تشغيل الملف الصوتي: " + audioUrl);
+  });
+
+  currentAudioElement.ontimeupdate = function() {
+    if (currentAudioElement && currentAudioElement.duration) {
+      progressFill.style.width = ((currentAudioElement.currentTime / currentAudioElement.duration) * 100) + '%';
+    }
+  };
+
+  currentAudioElement.onplaying = function() {
+      if (currentAudioElement) {
+        currentAudioElement.playbackRate = state.audioRate;
+        بدءالمزامنةالبصريةالذكية(key);
+      }
+  };
+
+  currentAudioElement.onended = function() {
+    playBtn.innerText = "▶";
+    progressFill.style.width = '0%';
+    stopCurrentAudio();
+  };
+}
+
+function بدءالمزامنةالبصريةالذكية(key) {
+    clearInterval(highlightInterval);
+    const container = document.getElementById('storyText' + key.replace('story',''));
+    if (!container) return;
+    const allWords = container.querySelectorAll('.story-word');
+    const allLines = container.querySelectorAll('.story-line');
+    
+    if(allLines.length > 0) {
+        allLines.forEach(l => l.classList.add('focus-blur'));
+        allLines[0].classList.remove('focus-blur');
+    }
+
+    highlightInterval = setInterval(() => {
+        if (!currentAudioElement || currentAudioElement.paused) return;
+        
+        let progressPercent = currentAudioElement.currentTime / currentAudioElement.duration;
+        let wordTargetIdx = Math.floor(progressPercent * allWords.length);
+        
+        if (wordTargetIdx >= 0 && wordTargetIdx < allWords.length) {
+            allWords.forEach(w => w.classList.remove('reading-active'));
+            let activeWord = allWords[wordTargetIdx];
+            activeWord.classList.add('reading-active');
+            
+            let parentLine = activeWord.closest('.story-line');
+            if (parentLine) {
+                allLines.forEach(l => l.classList.add('focus-blur'));
+                parentLine.classList.remove('focus-blur');
+            }
+        }
+    }, 120); 
+}
+
+function toggleSpeed() {
+    if (state.audioRate === 1.0) {
+        state.audioRate = 0.75; 
+        تظهرتسميةالسرعة("سرعة: 0.75x (بطيء)");
+    } else {
+        state.audioRate = 1.0;
+        تظهرتسميةالسرعة("سرعة: 1x (عادي)");
+    }
+    if (currentAudioElement) {
+        currentAudioElement.playbackRate = state.audioRate;
+    }
+}
+
+function تظهرتسميةالسرعة(label) {
+    document.querySelectorAll('.btn-speed-toggle').forEach(btn => btn.innerText = label);
+}
+
+function stopCurrentAudio() {
+  clearInterval(highlightInterval);
+  if (currentAudioElement) {
+    try { currentAudioElement.pause(); } catch(e) {}
+    const oldBtn = document.getElementById('playBtn_' + currentPlayingKey);
+    if (oldBtn) oldBtn.innerText = "▶";
+    
+    const fillProgress = document.getElementById('audioFill_' + currentPlayingKey);
+    if(fillProgress) fillProgress.style.width = '0%';
+    
+    const container = document.getElementById('storyText' + currentPlayingKey.replace('story',''));
+    if(container) {
+        container.querySelectorAll('.story-word').forEach(w => w.classList.remove('reading-active'));
+        container.querySelectorAll('.story-line').forEach(l => l.classList.remove('focus-blur'));
+    }
+    currentAudioElement = null;
+    currentPlayingKey = null;
+  }
+}
+
+function playTeacherModel() {
+  const data = levelData[state.difficulty];
+  const audioUrl = data.audio_model; 
+  const btn = document.getElementById('btnTeacherModel');
+
+  if (currentAudioElement && currentPlayingKey === 'model') {
+    if (!currentAudioElement.paused) {
+      currentAudioElement.pause();
+      btn.innerText = "🎧 اسْتَمِعْ لِقِرَاءَةِ الْأُسْتَاذَةِ النَّمُوذَجِيَّةِ";
+    } else {
+      currentAudioElement.play();
+      btn.innerText = "⏸ إِيقَافُ الِاسْتِمَاعِ";
+    }
+    return;
+  }
+
+  stopCurrentAudio();
+  
+  currentAudioElement = new Audio(audioUrl);
+  currentPlayingKey = 'model';
+  btn.innerText = "⏸ إِيقَافُ الِاسْتِمَاعِ";
+
+  currentAudioElement.play().catch(err => {
+      console.log("ملف المعلمة غير متوفر: " + audioUrl);
+  });
+
+  currentAudioElement.onended = function() {
+    btn.innerText = "🎧 اسْتَمِعْ لِقِرَاءَةِ الْأُسْتَاذَةِ النَّمُوذَجِيَّةِ";
+    stopCurrentAudio();
+  };
+}
+
+function startSession() {
+  const nameInput = document.getElementById('studentName').value.trim();
+  if (!nameInput) {
+    alert("⚠️ مِنْ فَضْلِكَ، اكْتُبِ اسْمَكَ أَوَّلاً لِبَدْءِ اللَّعِبِ!");
+    return;
+  }
+  state.studentName = nameInput;
+  state.startTime = Date.now(); 
+
+  document.getElementById('screenLogin').style.display = 'none';
+  document.getElementById('screenLogin').classList.remove('active');
+  
+  const gameScreen = document.getElementById('screen0');
+  gameScreen.style.display = 'block';
+  gameScreen.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function setDifficulty(level) {
+  state.difficulty = level;
+  state.orderAttempts = 0; 
+  const data = levelData[level];
+  visualDone = false;
+  compDone = false;
+  memoryDone = false;
+  hasRecorded = false; 
+  
+  stopCurrentAudio();
+  
+  document.getElementById('btnBack').style.display = 'flex';
+  document.getElementById('btnHome').style.display = 'flex';
+  document.getElementById('difficulty-levels').style.display = 'none';
+  document.getElementById('motivationBox').style.display = 'block';
+  
+  document.getElementById('storyCard0').style.display = 'block';
+  document.getElementById('challengeCard0').style.display = 'block';
+  
+  document.getElementById('storyText0').innerHTML =  هندسةالنصالتفاعلي(data.story0);
+
+  const compContainer = document.getElementById('comprehensionQ');
+  compContainer.innerHTML = `
+    <div class="q-header-wrapper">
+      <div class="q-label">📖 سُؤَالُ الْفَهْمِ وَالِاسْتِيعَابِ</div>
+    </div>
+    <p id="memoryQuestion" style="margin:10px 0; font-size:22px; font-family:'Amiri', serif; font-weight: bold;">${data.compQuestion}</p>
+    <div class="choices" id="compChoices"></div>
+    <div class="feedback-box" id="compFb"></div>
+  `;
+
+  const compChoices = document.getElementById('compChoices');
+  data.compChoices.forEach(choice => {
+    let div = document.createElement('div');
+    div.className = 'choice';
+    div.innerText = choice.text;
+    div.setAttribute('data-correct', choice.correct);
+    div.onclick = function() { checkComp(this, choice.correct); };
+    compChoices.appendChild(div);
+  });
+
+  const memoryChoices = document.querySelectorAll('#memoryChoices .choice');
+  memoryChoices.forEach(c => {
+      c.className = 'choice';
+      c.style.pointerEvents = 'auto';
+  });
+  
+  document.getElementById('memoryFb').style.display = 'none';
+  document.getElementById('memoryFb').classList.remove('show');
+  document.getElementById('compFb').style.display = 'none';
+  document.getElementById('compFb').classList.remove('show');
+
+  if (level === 'easy') {
+    document.getElementById('visualChallenge').style.display = 'none';
+    document.getElementById('comprehensionQ').style.display = 'block';
+    document.getElementById('memoryChallenge').style.display = 'block';
+    document.getElementById('next0').classList.remove('show');
+    startTimer(20); 
+  } else {
+    document.getElementById('visualChallenge').style.display = 'block';
+    document.getElementById('comprehensionQ').style.display = 'block';
+    document.getElementById('memoryChallenge').style.display = 'none';
+    
+    const vChoices = document.getElementById('visualChoices');
+    vChoices.innerHTML = '';
+    document.getElementById('visualFb').style.display = 'none';
+    document.getElementById('visualFb').classList.remove('show');
+    
+    data.visualOpts.forEach(opt => {
+      let div = document.createElement('div');
+      div.className = 'choice';
+      div.innerText = opt.text;
+      div.setAttribute('data-correct', opt.correct);
+      div.onclick = function() { checkVisual(this, opt.correct); };
+      vChoices.appendChild(div);
+    });
+    startTimer(level === 'medium' ? 20 : 12);
+  }
+
+  document.getElementById('storyText1').innerHTML = هندسةالنصالتفاعلي(data.story1);
+  document.getElementById('blankSentence1').innerHTML = data.blank1.replace('________', '<span class="blank" id="blankTarget">________</span>');
+  const fo1 = document.getElementById('fo1');
+  fo1.innerHTML = '';
+  document.getElementById('fb1').style.display = 'none';
+  document.getElementById('fb1').classList.remove('show');
+  data.opts1.forEach(opt => {
+    let btn = document.createElement('button');
+    btn.className = 'fill-opt';
+    btn.innerText = opt.text;
+    btn.setAttribute('data-correct', opt.correct);
+    btn.setAttribute('data-text', opt.text);
+    btn.onclick = function() { checkFill(this, opt.correct); };
+    fo1.appendChild(btn);
+  });
+
+  document.getElementById('storyText2').innerHTML = هندسةالنصالتفاعلي(data.story2);
+  const oList = document.getElementById('orderList');
+  oList.innerHTML = '';
+  document.getElementById('fb2').style.display = 'none';
+  document.getElementById('fb2').classList.remove('show');
+  document.querySelector('.btn-check').style.display = 'inline-block';
+  
+  let shuffled = [...data.order2].sort(() => Math.random() - 0.5);
+  shuffled.forEach(item => {
+    let div = document.createElement('div');
+    div.className = 'order-item';
+    div.setAttribute('data-order', item.order);
+    div.innerHTML = `
+      <div class="order-right-side">
+        <div class="order-num">?</div>
+        <div style="margin-right:8px;">${item.text}</div>
+      </div>
+      <div class="move-btns">
+        <button class="move-btn" onclick="moveUp(this)">▲</button>
+        <button class="move-btn" onclick="moveDown(this)">▼</button>
+      </div>`;
+    oList.appendChild(div);
+  });
+  updateOrderNumbers();
+
+  document.getElementById('storyText3').innerHTML = هندسةالنصالتفاعلي(data.story3);
+  document.getElementById('readSentenceTarget').innerText = `"${data.sentence3}"`;
+  
+  const recBtn = document.getElementById('recBtn');
+  recBtn.innerText = "🔴 ابْدَأْ تَسْجِيلَ قِرَاءَتِكَ (مُحَاكَاةٌ)";
+  recBtn.className = "record-btn";
+  recBtn.style.background = "var(--gold2)";
+  recBtn.style.color = "white";
+  document.getElementById('recStatus').innerText = "اقْرَأِ الْجُمْلَةَ بِوُضُوحٍ كَمَا سَمِعْتَهَا لِيَتِمَّ حِفْظُهَا لِلْأُسْتَاذَةِ.";
+  document.getElementById('fb3').style.display = 'none';
+  document.getElementById('fb3').classList.remove('show');
+}
+
+function actionGoBack() {
+  if (state.currentLevel > 0) {
+    goLevel(state.currentLevel - 1);
+  } else {
+    stopCurrentAudio();
+    clearInterval(timer);
+    document.getElementById('readingTimer').style.display = 'none';
+    document.getElementById('difficulty-levels').style.display = 'flex';
+    document.getElementById('motivationBox').style.display = 'block';
+    document.getElementById('storyCard0').style.display = 'none';
+    document.getElementById('challengeCard0').style.display = 'none';
+    document.getElementById('btnBack').style.display = 'none';
+    document.getElementById('btnHome').style.display = 'none';
+  }
+}
+
+function actionEndGame() {
+  if(confirm("هَلْ أَنْتِ مُتَأَكِّدَةٌ أَنَّكَ تُرِيدُ إِنْهَاءُ اللَّعِبِ وَالْعَوْدَةَ إِلَى الْبِدَايَةِ؟")) {
+    location.reload();
+  }
+}
+
+function goLevel(lvl) {
+  stopCurrentAudio();
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(s => {
+    s.style.display = 'none';
+  });
+  
+  for(let i=0; i<=3; i++) {
+    const lc = document.getElementById('lc' + i);
+    const con = document.getElementById('con' + i);
+    const ll = document.getElementById('ll' + i);
+    
+    if (lc) {
+      lc.className = 'level-circle';
+      if (i < lvl) lc.classList.add('done');
+      else if (i === lvl) lc.classList.add('active');
+      else lc.classList.add('locked');
+    }
+    if (con) {
+      con.className = 'level-connector';
+      if (i < lvl) con.classList.add('done');
+    }
+    if (ll) {
+      ll.className = 'level-label';
+      if (i === lvl) ll.classList.add('active-label');
+    }
+  }
+  
+  state.currentLevel = lvl;
+  document.getElementById('myProgressBar').style.width = ((lvl) / 4) * 100 + '%';
+  const currentScreen = document.getElementById('screen' + lvl);
+  currentScreen.classList.add('active');
+  currentScreen.style.display = 'block';
+  window.scrollTo(0,0);
+}
+
+function startTimer(seconds) {
+  clearInterval(timer);
+  timeLeft = seconds;
+  const timerBox = document.getElementById('readingTimer');
+  timerBox.innerHTML = `⏳ الْوَقْتُ الْمُتَبَقِّي: <span id="timerNum">${timeLeft}</span> ثَانِيَةً`;
+  timerBox.style.display = 'block';
+  
+  timer = setInterval(() => {
+    timeLeft--;
+    const currentTimerNum = document.getElementById('timerNum');
+    if(currentTimerNum) currentTimerNum.textContent = timeLeft;
+    if (timeLeft <= 0) {
+      clearInterval(timer);
+      timerBox.innerHTML = "⌛ انْتَهَى الْوَقْتُ النَّمُوذَجِيُّ لِلْقِرَاءَةِ! وَاصِلِ التَّحَدِّي بِتَرْكِيزٍ.";
+    }
+  }, 1000);
+}
+
+function checkVisual(btn, isCorrect) {
+  const fb = document.getElementById('visualFb');
+  
+  if (isCorrect) {
+    const allChoices = document.querySelectorAll('#visualChoices .choice');
+    allChoices.forEach(c => c.style.pointerEvents = 'none'); 
+    btn.className = 'choice correct';
+    fb.className = 'feedback-box success show';
+    fb.innerText = '✅ اخْتِيَارٌ بَصَرِيٌّ دَقِيقٌ وَمُمْتَازٌ!';
+    state.correctCount++;
+    document.getElementById('scoreNum').innerText = state.correctCount;
+    visualDone = true;
+  } else {
+    btn.className = 'choice wrong'; 
+    btn.style.pointerEvents = 'none';
+    fb.className = 'feedback-box error show';
+    fb.innerText = getErrorFeedback(); 
+  }
+
+  if (visualDone && compDone) {
+    clearInterval(timer);
+    document.getElementById('readingTimer').style.display = 'none';
+    document.getElementById('next0').classList.add('show');
+  }
+}
+
+function checkComp(btn, isCorrect) {
+  const fb = document.getElementById('compFb');
+
+  if (isCorrect) {
+    const allChoices = document.querySelectorAll('#compChoices .choice');
+    allChoices.forEach(c => c.style.pointerEvents = 'none');
+    btn.className = 'choice correct';
+    fb.className = 'feedback-box success show';
+    fb.innerText = '✅ فَهْمٌ مُمْتَازٌ وَمُطَابَقَةٌ صَحِيحَةٌ لِمَضْمُونِ الْقِصَّةِ!';
+    state.correctCount++;
+    document.getElementById('scoreNum').innerText = state.correctCount;
+    compDone = true;
+  } else {
+    btn.className = 'choice wrong';
+    btn.style.pointerEvents = 'none';
+    fb.className = 'feedback-box error show';
+    fb.innerText = getErrorFeedback();
+  }
+
+  if (compDone) {
+    if (state.difficulty === 'easy' && memoryDone) {
+      clearInterval(timer);
+      document.getElementById('readingTimer').style.display = 'none';
+      document.getElementById('next0').classList.add('show');
+    } else if (state.difficulty !== 'easy' && visualDone && compDone) {
+      clearInterval(timer);
+      document.getElementById('readingTimer').style.display = 'none';
+      document.getElementById('next0').classList.add('show');
+    }
+  }
+}
+
+function checkMemory(btn, isCorrect) {
+  const fb = document.getElementById('memoryFb');
+
+  if(isCorrect){
+    const parentChoices = document.querySelectorAll('#memoryChoices .choice');
+    parentChoices.forEach(c => c.style.pointerEvents = 'none');
+    btn.className = 'choice correct';
+    fb.className = 'feedback-box success show';
+    fb.innerText = '✅ مُمْتَازٌ! ذَاكِرَتُكَ قَوِيَّةٌ جِدّاً.';
+    state.correctCount++;
+    document.getElementById('scoreNum').innerText = state.correctCount;
+    memoryDone = true;
+  } else {
+    btn.className = 'choice wrong';
+    btn.style.pointerEvents = 'none';
+    fb.className = 'feedback-box error show';
+    fb.innerText = getErrorFeedback(); 
+  }
+  
+  if (compDone && memoryDone) {
+    clearInterval(timer);
+    document.getElementById('readingTimer').style.display = 'none';
+    document.getElementById('next0').classList.add('show');
+  }
+}
+
+function checkFill(btn, isCorrect) {
+  const fb = document.getElementById('fb1');
+
+  if (isCorrect) {
+    const allChoices = document.querySelectorAll('#fo1 .fill-opt');
+    allChoices.forEach(b => b.style.pointerEvents = 'none');
+    btn.className = 'fill-opt correct';
+    document.getElementById('blankTarget').innerText = btn.innerText;
+    fb.className = 'feedback-box success show';
+    fb.innerText = '✅ أَحْسَنْتَ! الْجُمْلَةُ الْآنَ سَلِيمَةٌ تَمَاماً.';
+    state.correctCount++;
+    document.getElementById('scoreNum').innerText = state.correctCount;
+    document.getElementById('next1').classList.add('show');
+  } else {
+    btn.className = 'fill-opt wrong';
+    btn.style.pointerEvents = 'none';
+    fb.className = 'feedback-box error show';
+    fb.innerText = getErrorFeedback(); 
+  }
+}
+
+function moveUp(btn) {
+  const item = btn.closest('.order-item');
+  const prev = item.previousElementSibling;
+  if (prev) { item.parentNode.insertBefore(item, prev); updateOrderNumbers(); }
+}
+
+function moveDown(btn) {
+  const item = btn.closest('.order-item');
+  const next = item.nextElementSibling;
+  if (next) { item.parentNode.insertBefore(next, item); updateOrderNumbers(); }
+}
+
+function updateOrderNumbers() {
+  const nums = ['١', '٢', '٣'];
+  document.querySelectorAll('#orderList .order-item').forEach((item, index) => {
+    let numBox = item.querySelector('.order-num');
+    if(numBox && index < nums.length) numBox.textContent = nums[index];
+  });
+}
+
+function checkOrder() {
+  const listContainer = document.getElementById('orderList');
+  const items = [...listContainer.querySelectorAll('.order-item')];
+  const orders = items.map(i => parseInt(i.dataset.order));
+  const fb = document.getElementById('fb2');
+  
+  state.orderAttempts++; 
+
+  if (orders[0] === 0 && orders[1] === 1 && orders[2] === 2) {
+    items.forEach(i => {
+      i.classList.add('correct-pos');
+      i.querySelector('.move-btns').style.display = 'none'; 
+    });
+    fb.className = 'feedback-box success show';
+    fb.innerText = '✅ رَائِعٌ جِدّاً! التَّرْتِيبُ مَنْطِقِيٌّ وَسَلِيمٌ.';
+    state.correctCount++;
+    document.getElementById('scoreNum').innerText = state.correctCount;
+    
+    document.querySelector('.btn-check').style.display = 'none';
+    document.getElementById('next2').classList.add('show');
+    
+  } else {
+    if (state.orderAttempts < 2) {
+      fb.className = 'feedback-box error show';
+      fb.innerText = getErrorFeedback(); 
+    } else {
+      fb.className = 'feedback-box error show';
+      fb.innerText = '✨ لَا بَأْسَ يَا بَطَلُ، إِلَيْكَ التَّرْتِيبَ الصَّحِيحَ لِلْأَحْدَاثِ لِتَتَعَلَّمَ مِنْهُ.';
+      
+      items.sort((a, b) => parseInt(a.dataset.order) - parseInt(b.dataset.order));
+      listContainer.innerHTML = ''; 
+      items.forEach(item => {
+        item.classList.add('correct-pos'); 
+        let moveBtns = item.querySelector('.move-btns');
+        if(moveBtns) moveBtns.style.display = 'none'; 
+        listContainer.appendChild(item);
+      });
+      updateOrderNumbers(); 
+      
+      document.querySelector('.btn-check').style.display = 'none';
+      document.getElementById('next2').classList.add('show');
+    }
+  }
+}
+
+async function toggleRecord() {
+  stopCurrentAudio();
+  const btn = document.getElementById('recBtn');
+  const status = document.getElementById('recStatus');
+  const fb = document.getElementById('fb3');
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    alert("عُذْراً، الْمُتَصَفِّحُ لَا يَدْعَمُ تَسْجِيلَ الصَّوْتِ.");
+    return;
+  }
+
+  if (!isRecording) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+
+      mediaRecorder.ondataavailable = event => {
+        if (event.data.size > 0) audioChunks.push(event.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        const timeSpentSeconds = Math.floor((Date.now() - state.startTime) / 1000);
+        const minutes = Math.floor(timeSpentSeconds / 60);
+        const seconds = timeSpentSeconds % 60;
+        const timeString = `${minutes} د و ${seconds} ث`;
+
+        // دمج حاسبة مؤشر الطلاقة العلمية (WPM) لقياس عدد الكلمات المقروءة في الدقيقة تلقائياً
+        let targetText = levelData[state.difficulty].sentence3 || "";
+        let wordCount = targetText.split(/\s+/).filter(w => w.trim().length > 0).length || 5;
+        let wpmRate = timeSpentSeconds > 0 ? Math.round((wordCount / timeSpentSeconds) * 60) : 0;
+        let fluencyDisplay = wpmRate > 0 ? `${wpmRate} كلمة/دقيقة` : "غير محدد";
+
+        const reader = new FileReader();
+        reader.readAsDataURL(audioBlob);
+        reader.onloadend = () => {
+            const base64data = reader.result;
+            const records = JSON.parse(localStorage.getItem('teacherRecords') || '[]');
+            const dateStr = new Date().toLocaleString('ar-MA');
+            
+            records.push({
+                id: Number(Date.now()), 
+                date: dateStr,
+                studentName: state.studentName,
+                level: levelData[state.difficulty].levelName,
+                score: state.correctCount, 
+                duration: timeString,
+                fluency: fluencyDisplay, // حفظ المؤشر بداخل الـ LocalStorage للأستاذة
+                audio: base64data
+            });
+            localStorage.setItem('teacherRecords', JSON.stringify(records));
+        };
+
+        fb.className = 'feedback-box info show';
+        fb.innerHTML = `
+          <div style="font-size:16px; margin-bottom:5px;">🎉 <strong>تَمَّ حِفْظُ قِرَاءَتِكَ بِنَجَاحٍ يَا بَطَل(َة)!</strong></div>
+          <div style="font-size:14px;">سَتَسْتَمِعُ الْأُسْتَاذَةِ إِلَى صَوْتِكَ الْجَمِيلِ لَاحِقاً لِتُقَيِّمَ تَأَلُّقَكَ.</div>
+        `;
+
+        if(!hasRecorded) {
+            state.correctCount++;
+            document.getElementById('scoreNum').innerText = state.correctCount;
+            hasRecorded = true;
+        }
+        document.getElementById('next3').classList.add('show');
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      isRecording = true;
+      btn.className = 'record-btn recording';
+      btn.innerText = 'جَارِي التَّسْجِيلُ... اضْغَطْ لِلْإِيقَافِ ⏹️';
+      status.innerText = '🎤 الْمِيكْرُوفُونُ يَسْتَمِعُ إِلَيْكَ الْآنَ... اقْرَأْ بِوُضُوحٍ.';
+      fb.style.display = 'none';
+
+    } catch (err) {
+      alert("يُرْجَى السَّمَاحُ لِلْمُتَصَفِّحِ بِاسْتِخْدَامِ الْمِيكْرُوفُونِ.");
+    }
+  } else {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+    }
+    isRecording = false;
+    btn.className = 'record-btn';
+    btn.style.background = 'var(--blue)';
+    btn.style.color = 'white';
+    btn.innerText = 'إِعَادَةُ التَّسْجِيلِ إِذَا أَرَدْتَ 🔄';
+    status.innerText = 'تَمَّ حِفْظُ الْمَقْطَعِ.';
+  }
+}
+
+function openTeacherDashboard() {
+  const password = prompt("🔒 أدخلي كلمة مرور الأستاذة");
+
+  if(password !== "Kawtar2026"){
+      alert("❌ كلمة المرور غير صحيحة");
+      return;
+  }
+
+  stopCurrentAudio();
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screenTeacher').classList.add('active');
+  document.getElementById('screenTeacher').style.display = 'block';
+  
+  const records = JSON.parse(localStorage.getItem('teacherRecords') || '[]');
+  
+  const totalAttempts = records.length;
+  let avgScore = 0;
+  let successPercent = 0;
+  let easyCount = 0, mediumCount = 0, hardCount = 0;
+  
+  if (totalAttempts > 0) {
+      let sumScores = 0;
+      let passAttempts = 0;
+      records.forEach(r => {
+          let scoreNum = parseInt(r.score) || 0;
+          sumScores += scoreNum;
+          if (scoreNum >= 2) passAttempts++; 
+          
+          if(r.level && r.level.includes("سَهْل")) easyCount++;
+          else if(r.level && r.level.includes("مُتَوَسِّط")) mediumCount++;
+          else if(r.level && r.level.includes("التَّحَدِّي")) hardCount++;
+      });
+      avgScore = (sumScores / totalAttempts).toFixed(1);
+      successPercent = Math.round((passAttempts / totalAttempts) * 100);
+  }
+  
+  document.getElementById('statTotal').innerText = totalAttempts;
+  document.getElementById('statAvgScore').innerText = avgScore;
+  document.getElementById('statSuccess').innerText = successPercent + "%";
+  
+  const ctx = document.getElementById('levelDistributionChart').getContext('2d');
+  if (levelChartInstance) { levelChartInstance.destroy(); } 
+  
+  levelChartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+          labels: ['مستوى سهل 🟢', 'مستوى متوسط 🟡', 'مستوى التحدي 🔴'],
+          datasets: [{
+              label: 'عدد محاولات الأطفال',
+              data: [easyCount, mediumCount, hardCount],
+              backgroundColor: ['#2ecc71', '#ff9800', '#e74c3c'],
+              borderRadius: 8,
+              borderWidth: 1
+          }]
+      },
+      options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+      }
+  });
+
+  const container = document.getElementById('recordsContainer');
+  container.innerHTML = '';
+  
+  if (records.length === 0) {
+    container.innerHTML = '<p style="text-align:center; color:var(--muted); padding:20px; font-family:\'Tajawal\'">لَا تُوجَدُ نَتَائِجُ أَوْ تَسْجِيلَاتٌ حَالِيّاً.</p>';
+    return;
+  }
+  
+  let tableHTML = `
+    <div style="overflow-x: auto; margin-top: 15px; font-family: 'Tajawal', sans-serif;">
+      <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 14px; direction: rtl;">
+        <thead>
+          <tr style="background: var(--bg3); color: var(--blue2); border-bottom: 2px solid var(--border);">
+            <th style="padding: 12px; border: 1px solid var(--border);">التلميذ(ة)</th>
+            <th style="padding: 12px; border: 1px solid var(--border);">المستوى</th>
+            <th style="padding: 12px; border: 1px solid var(--border);">النقطة</th>
+            <th style="padding: 12px; border: 1px solid var(--border);">الوقت المستغرق</th>
+            <th style="padding: 12px; border: 1px solid var(--border);">معدل الطلاقة (الانقرائية)</th>
+            <th style="padding: 12px; border: 1px solid var(--border);">التسجيل والصوت</th>
+            <th style="padding: 12px; border: 1px solid var(--border);">إجراء</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+  
+  let recordsDisplay = [...records].reverse();
+  
+  recordsDisplay.forEach((rec, index) => {
+    let uniqueId = rec.id || ("old_" + index);
+    tableHTML += `
+      <tr id="row_${uniqueId}" style="border-bottom: 1px solid var(--border); background: #ffffff;">
+        <td style="padding: 12px; border: 1px solid var(--border); font-weight: bold; color: var(--text);">${rec.studentName || 'تلميذ(ة) تجريبي'}</td>
+        <td style="padding: 12px; border: 1px solid var(--border); color: var(--muted);">${rec.level || 'مُسْتَوَى سَهْل'}</td>
+        <td style="padding: 12px; border: 1px solid var(--border); color: var(--green2); font-weight: bold;">⭐ ${rec.score} نقط</td>
+        <td style="padding: 12px; border: 1px solid var(--border); color: #3498db; font-family: monospace;">⏱️ ${rec.duration || '0 د و 45 ث'}</td>
+        <td style="padding: 12px; border: 1px solid var(--border); color: #e67e22; font-weight: bold;">📊 ${rec.fluency || 'تحت الاحتساب'}</td>
+        <td style="padding: 12px; border: 1px solid var(--border);">
+          <audio controls src="${rec.audio}" style="height: 32px; width: 140px; vertical-align: middle;"></audio>
+        </td>
+        <td style="padding: 12px; border: 1px solid var(--border);">
+          <button class="btn-delete-row" onclick="deleteSingleRecord('${uniqueId}')">🗑️ حذف</button>
+        </td>
+      </tr>
+    `;
+  });
+  
+  tableHTML += `</tbody></table></div>`;
+  container.innerHTML = tableHTML;
+}
+
+function deleteSingleRecord(id) {
+    if(confirm("هل أنتِ متأكدة من حذف محاولة هذا المتعلم نهائياً؟")) {
+        let records = JSON.parse(localStorage.getItem('teacherRecords') || '[]');
+        let recordsDisplay = [...records].reverse();
+        let originalIndex = -1;
+
+        recordsDisplay.forEach((rec, index) => {
+            let recordId = rec.id || ("old_" + index);
+            if(String(recordId) === String(id)) {
+                originalIndex = records.length - 1 - index;
+            }
+        });
+
+        if(originalIndex !== -1) {
+            records.splice(originalIndex, 1);
+            localStorage.setItem('teacherRecords', JSON.stringify(records));
+        }
+        openTeacherDashboard();
+    }
+}
+
+function exportRecordsToCSV() {
+    const records = JSON.parse(localStorage.getItem('teacherRecords') || '[]');
+    if (records.length === 0) {
+        alert("⚠️ لا توجد أي بيانات حالياً لتحميلها!");
+        return;
+    }
+    
+    let csvContent = "\uFEFF"; 
+    csvContent += "اسم التلميذ(ة),المستوى,النقاط المحصلة,الوقت المستغرق,معدل الطلاقة,التاريخ والوقت\n";
+    
+    records.forEach(r => {
+        let cleanName = (r.studentName || 'تلميذ تجريبي').replace(/,/g, '-'); 
+        csvContent += `${cleanName},${r.level},${r.score} نقاط,${r.duration},${r.fluency || 'غير محدد'},${r.date}\n`;
+    });
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `تقرير_رحلة_القراءة_${new Date().toLocaleDateString('ar-MA')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function closeTeacherDashboard() {
+  document.getElementById('screenTeacher').classList.remove('active');
+  document.getElementById('screenTeacher').style.display = 'none';
+  if(document.getElementById('storyCard0').style.display === 'none' && state.currentLevel === 0){
+      document.getElementById('screen0').classList.add('active');
+      document.getElementById('screen0').style.display = 'block';
+  } else {
+      document.getElementById('screen' + state.currentLevel).classList.add('active');
+      document.getElementById('screen' + state.currentLevel).style.display = 'block';
+  }
+}
+
+function clearRecords() {
+  if(confirm("هَلْ أَنْتِ مُتَأَكِّدَةٌ مَنْ حَذْفِ جَمِيعِ التَّسْجِيلَاتِ نِهَائِيّاً؟")) {
+    localStorage.removeItem('teacherRecords');
+    openTeacherDashboard();
+  }
+}
+
+function showFinal() {
+  stopCurrentAudio();
+  document.getElementById('btnBack').style.display = 'none'; 
+  document.getElementById('btnHome').style.display = 'none'; 
+  document.getElementById('screen3').classList.remove('active');
+  document.getElementById('screen3').style.display = 'none';
+  document.getElementById('screenFinal').classList.add('active');
+  document.getElementById('screenFinal').style.display = 'block';
+  document.getElementById('myProgressBar').style.width = '100%';
+  document.getElementById('finalScore').innerText = 'النِّقَاطُ الَّتِي جَمَعْتَهَا: ' + state.correctCount + ' نِقَاطِ بَطَل(َة)!';
+}
+
+function restartGameWithoutName() {
+  clearInterval(timer);
+  stopCurrentAudio();
+
+  state.currentLevel = 0;
+  state.correctCount = 0;
+  state.orderAttempts = 0;
+  state.startTime = Date.now(); 
+  
+  visualDone = false;
+  compDone = false;
+  memoryDone = false;
+  hasRecorded = false;
+
+  document.getElementById('scoreNum').innerText = "0";
+  document.getElementById('myProgressBar').style.width = '0%';
+  document.getElementById('screenFinal').classList.remove('active');
+  document.getElementById('screenFinal').style.display = 'none';
+  
+  document.getElementById('difficulty-levels').style.display = 'flex';
+  document.getElementById('motivationBox').style.display = 'block';
+  
+  document.getElementById('storyCard0').style.display = 'none';
+  document.getElementById('challengeCard0').style.display = 'none';
+  document.getElementById('readingTimer').style.display = 'none';
+  
+  document.getElementById('next0').classList.remove('show');
+  document.getElementById('next1').classList.remove('show');
+  document.getElementById('next2').classList.remove('show');
+  document.getElementById('next3').classList.remove('show');
+
+  const gameScreen = document.getElementById('screen0');
+  gameScreen.style.display = 'block';
+  gameScreen.classList.add('active');
+  
+  document.getElementById('btnBack').style.display = 'none';
+  document.getElementById('btnHome').style.display = 'flex';
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+let teacherSecretClicks = 0;
+document.getElementById("appTitle").addEventListener("click", function () {
+    teacherSecretClicks++;
+    if (teacherSecretClicks === 5) {
+        document.getElementById("teacherBtn").style.display = "inline-block";
+        alert("👩‍🏫 تم تفعيل وضع الأستاذة");
+        teacherSecretClicks = 0;
+        setTimeout(() => {
+            let btn = document.getElementById("teacherBtn");
+            if(btn && document.getElementById('screenTeacher').style.display !== 'block') {
+               btn.style.display = "none";
+            }
+        }, 15000); 
+    }
+});
+</script>
+</body>
+</html>
