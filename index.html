@@ -35,6 +35,13 @@
     direction: rtl;
   }
 
+  /* ألوان الحركات التشكيلية المخصصة */
+  .fatha { color: #2ecc71; font-weight: bold; }   /* الفتحة باللون الأخضر */
+  .damma { color: #3498db; font-weight: bold; }   /* الضمة باللون الأزرق */
+  .kasra { color: #e74c3c; font-weight: bold; }   /* الكسرة باللون الأحمر */
+  .sukun { color: #f1c40f; font-weight: bold; }   /* السكون باللون الأصفر */
+  .shadda { color: #9b59b6; font-weight: bold; }  /* الشدة باللون البنفسجي */
+
   .progress-container { width: 100%; background: #e2e8f0; height: 16px; border-radius: 0; margin-bottom: 0; }
   .progress-bar { width: 0%; height: 100%; background: var(--green); transition: 0.5s; border-radius: 0 8px 8px 0; }
 
@@ -95,11 +102,10 @@
   .story-line { display: block; transition: opacity 0.3s ease; margin-bottom: 8px; }
   .story-line.focus-blur { opacity: 0.35; filter: blur(0.5px); }
   
-  .story-word { cursor: pointer; display: inline-block; padding: 0 4px; border-radius: 6px; transition: 0.15s, transform 0.2s ease; }
+  .story-word { cursor: pointer; display: inline-block; padding: 0 6px; border-radius: 6px; transition: 0.15s; }
   .story-word:hover { background: #fff3cd; color: var(--gold2); }
-  
-  /* إضافة ميزة تكبير وتوضيح الكلمة النشطة بزيادة مقياس الحجم لدعم الانقرائية البصرية وتفادي تشتت المتعلم */
-  .story-word.reading-active { background: #ffe082; color: #000; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transform: scale(1.15); display: inline-block; }
+  .story-word.reading-active { background: #ffe082; color: #000; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+  .story-word.manual-focus { background: #ffecb3 !important; transform: scale(1.15); font-weight: bold; transition: 0.2s transform ease; }
   
   .punctuation { color: #ff5722; font-weight: bold; margin: 0 6px; font-size: 28px; display: inline-block; }
 
@@ -186,6 +192,11 @@
 
   .btn-delete-row { background: #fdf2f2; border: 1px solid #f9aca6; color: var(--red); font-size: 14px; cursor: pointer; padding: 6px 12px; border-radius: 8px; transition: 0.2s; font-family: 'Tajawal', sans-serif; font-weight: bold; }
   .btn-delete-row:hover { background: var(--red); color: white; transform: scale(1.05); }
+
+  .diagnostic-pill { padding: 4px 8px; font-size: 12px; border-radius: 6px; cursor: pointer; border: 1px solid var(--border); font-weight: bold; background: white; margin: 2px; display: inline-block; }
+  .diagnostic-pill.active-red { background: #fdf2f2; color: var(--red); border-color: var(--red); }
+  .diagnostic-pill.active-yellow { background: #fff9e6; color: var(--gold2); border-color: var(--gold2); }
+  .diagnostic-pill.active-blue { background: #e3f2fd; color: var(--blue2); border-color: var(--blue2); }
 </style>
 </head>
 <body>
@@ -261,7 +272,7 @@
     <div class="card" id="challengeCard0" style="display:none;">
       <div id="visualChallenge" style="display:none;">
         <div class="q-header-wrapper">
-          <div class="q-label">👀 تَحَدِّي التَّمْيِيزِ الْبَصَرِيِّ</div>
+          <div class="q-label">👀 تَحَدِّي التَّمْيِيزِ الْبَصَرِِيِّ</div>
         </div>
         <p style="margin-bottom: 12px; font-size:22px; font-family:'Amiri', serif; font-weight: bold;">اخْتَرِ الْكَلِمَةَ الصَّحِيحَةَ الْمُطَابِقَةَ تَمَاماً لِمَا وَرَدَ فِي نَصِّ الْقِصَّةِ:</p>
         <div class="choices" id="visualChoices"></div>
@@ -419,7 +430,7 @@
         <button class="btn-action btn-clear-all" onclick="clearRecords()">🗑️ حَذْفُ كُلِّ التَّسْجِيلَاتِ</button>
       </div>
 
-      <h3 style="color: var(--blue2); font-family: 'Tajawal'; margin-bottom: 10px; font-size: 16px;">📋 تفاصيل نتائج نتائج المتعلمين والتسجيلات الصوتية:</h3>
+      <h3 style="color: var(--blue2); font-family: 'Tajawal'; margin-bottom: 10px; font-size: 16px;">📋 تفاصيل نتائج المتعلمين والتسجيلات الصوتية:</h3>
       <div id="recordsContainer"></div>
       
       <button onclick="closeTeacherDashboard()" style="margin-top: 15px; background: var(--bg); color: var(--text); border: 2px solid var(--border); padding: 10px 20px; border-radius: 12px; cursor: pointer; font-family: 'Tajawal'; font-weight:bold;">⬅️ عَوْدَةٌ لِلَّعِبِ</button>
@@ -429,7 +440,7 @@
 </div>
 
 <script>
-let state = { currentLevel: 0, correctCount: 0, difficulty: 'easy', orderAttempts: 0, studentName: "", audioRate: 1.0, startTime: Date.now() };
+let state = { currentLevel: 0, correctCount: 0, difficulty: 'easy', orderAttempts: 0, studentName: "", audioRate: 1.0, startTime: Date.now(), recordStartTime: null };
 let timer;
 let timeLeft = 20;
 
@@ -467,7 +478,7 @@ const levelData = {
     audio_model: "audio/easy_q1.mp3", 
     levelName: "مُسْتَوَى سَهْلٌ",
     story0: "كَانَ أَسَدٌ يَعِيشُ فِي الْغَابَةِ <span class='punctuation'>.</span>|فِي يَوْمٍ مِنَ الْأَيَّامِ <span class='punctuation'>،</span> سَقَطَ فِي حُفْرَةٍ عَمِيقَةٍ|وَلَا يَسْتَطِيعُ الْخُرُوجَ مِنْهَا <span class='punctuation'>.</span>",
-    story1: "مَرَّ أَرْنَبٌ صَغِيرٌ بِجَانِبِ الْحُفْرَةِ <span class='punctuation'>،</span>|فَسَمِعَ صَوْتَ الْأَسَدِ يَسْتَغِيثُ <span class='punctuation'>.</span>|اقْتَرَبَ مِنْهُ وَسَأَلَهُ بِلُطْفٍ <span class='punctuation'>:</span> مَاذَا حَدَثَ يَا مَلِكَ الْغَابَةِ؟|فَقَالَ الْأَسَدُ حَزِيناً <span class='punctuation'>:</span> سَاعِدْنِي مِنْ فَضْلِكَ <span class='punctuation'>.</span>",
+    story1: "مَرَّ أَرْنَبٌ صَغِيرٌ بِجَانِِبِ الْحُفْرَةِ <span class='punctuation'>،</span>|فَسَمِعَ صَوْتَ الْأَسَد يَطْلُبُ المُسَاعَدَةَ<span class='punctuation'>.</span>|اقْتَرَبَ مِنْهُ وَسَأَلَهُ بِلُطْفٍ <span class='punctuation'>:</span> مَاذَا حَدَثَ يَا مَلِكَ الْغَابَةِ؟|فَقَالَ الْأَسَدُ حَزِيناً <span class='punctuation'>:</span> سَاعِدْنِي مِنْ فَضْلِكَ <span class='punctuation'>.</span>",
     blank1: "سَاعِدْنِي مِنْ ________",
     opts1: [
       {text: "كِتَابٌ", correct: false},
@@ -490,11 +501,11 @@ const levelData = {
     ]
   },
   medium: {
-    audio_story0: "audio/easy_story0.mp3",
-    audio_story1: "audio/easy_story1.mp3",
-    audio_story2: "audio/easy_story2.mp3",
-    audio_story3: "audio/easy_story3.mp3",
-    audio_model: "audio/easy_story0.mp3",
+    audio_story0: "audio/medium_story0.mp3",
+    audio_story1: "audio/medium_story1.mp3",
+    audio_story2: "audio/medium_story2.mp3",
+    audio_story3: "audio/medium_story3.mp3",
+    audio_model: "audio/medium_story4.mp3",
     levelName: "مُسْتَوَى مُتَوَسِّطٌ",
     story0: "بَيْنَمَا كَانَ الْأَسَدُ <span class='punctuation'>،</span> مَلِكُ الْغَابَةِ <span class='punctuation'>،</span>|يَتَجَوَّلُ بَيْنَ الْأَشْجَارِ الْكَثِيفَةِ <span class='punctuation'>،</span>|سَقَطَ فَجْأَةً فِي حُفْرَةٍ عَمِيقَةٍ وَمَخْفِيَّةٍ|لَمْ يَنْتَبِهْ لَهَا أَبَداً <span class='punctuation'>.</span>",
     visualOpts: [
@@ -506,7 +517,7 @@ const levelData = {
     blank1: "سَمِعَ السِّنْجَابُ صُرَاخَ الْأَسَدِ ________",
     opts1: [
       {text: "الْمَسْرُورِ", correct: false},
-      {text: "الْمَدْعُورِ", correct: true},
+      {text: "الْمَذْعُورِ", correct: true},
       {text: "الْمَشْهُورِ", correct: false}
     ],
     story2: "لَمْ يَتَرَدَّدِ السِّنْجَابُ <span class='punctuation'>،</span>|بَلِ اسْتَدْعَى الْفِيلَ الْقَوِيَّ وَالْقِرْدَ الْمَرِنَ |وَبَدَأُوا فِي تَطْبِيقِ خُطَّةٍ مُتَمَاسِكَةٍ|لِرَفْعِهِ مِنْ قَاعِ الْحُفْرَةِ السَّحِيقَةِ <span class='punctuation'>.</span>",
@@ -515,7 +526,7 @@ const levelData = {
       {text: "رَصْدُ السِّنْجَابِ لِمَأْزِقِ مَلِكِ الْغَابَةِ", order: 0},
       {text: "إِخْرَاجُ الْأَسَدِ بِفَضْلِ الْقُوَّةِ الْمُشْتَرَكَةِ", order: 2}
     ],
-    story3: "نَفَضَ الْأَسَدُ الْغُبَارَ عَنْ فَرْوَتِهِ |مُعْلِناً بِامْتِنَانٍ أَمَامَ جَمِيعِ الْحَاضِرِينَ|أَنَّ التَّعَاوُنَ هُوَ السِّلَاحُ الْأَقْوَى فِي الْمَوَاقِفِ الْحَرِجَةِ <span class='punctuation'>.</span>",
+    story3: "نَفَضَ الْأَسَدُ الْغُبَارَ عَنْ فَرْوَتِهِ |مُعْلِناً بِامْتِنَانٍ أَمَامَ جَمِيعِ |أَنَّ التَّعَاوُنَ هُوَ السِّلَاحُ الْأَقْوَى فِي الْمَوَاقِفِ الْحَرِجَةِ <span class='punctuation'>.</span>",
     sentence3: "التَّعَاوُنُ هُوَ السِّلَاحُ الْأَقْوَى فِي الْمَوَاقِفِ الْحَرِجَةِ",
     compQuestion: "مَاذَا كَانَ يَفْعَلُ الْأَسَدُ قَبْلَ سُقُوطِهِ ؟",
     compChoices: [
@@ -531,14 +542,14 @@ const levelData = {
     audio_story3: "audio/hard_story3.mp3",
     audio_model: "audio/hard_model.m4a", 
     levelName: "مُسْتَوَى التَّحَدِّي",
-    story0: "تَعَثَّرَ هِزْبَرُ الْغَابَةِ فِي شَرَكٍ مَحْبُوكٍ|نَصَبَهُ قَنَّاصٌ مُحْتَرِفٌ <span class='punctuation'>،</span>|فَبَاتَ سَجِينَ الْمَصْيَدَةِ الْمُحْكَمَةِ|يُقَاوِمُ الْأَغْلَالَ دُونَ جَدْوَى <span class='punctuation'>.</span>",
+    story0: "تَعَثَّرَ هِزَبْرٌ الْغَابَةِ فِي فَخٍّ خَفِيٍّ،|نَصَبَهُ قَنَّاصٌ مُحْتَرِفٌ <span class='punctuation'>،</span>|فَبَاتَ سَجِينَ الْمَصْيَدَةِ الْمُحْكَمَةِ|يُقَاوِمُ الْأَغْلَالَ دُونَ جَدْوَى <span class='punctuation'>.</span>",
     visualOpts: [
-      {text: "شَبَكٍ مَفْكُوكٍ", correct: false},
-      {text: "شَرَكٍ مَحْبُوكٍ", correct: true},
-      {text: "شَرِيكٍ مَبْرُوكٍ", correct: false}
+      {text: "فَخٌّ قَوِيٌّ", correct: false},
+      {text: "َفَخٍّ خَفِيٍّ", correct: true},
+      {text: "فَخٌّ غَنِيٌّ", correct: false}
     ],
-    story1: "لَمْ تَكُنْ نَجَاةُ الْهِزْبَرِ مِنْ قَبْضَةِ الصَّيَّادِ أَمْراً هَيِّناً <span class='punctuation'>،</span>|بَلْ تَطَلَّبَتْ لِزَاماً تَظَافُرَ جُهُودِ الْحَيَوَانَاتِ قَاطِبَةً|كَيْ لَا يَقَعَ الْجَمِيعُ فَرِيسَةً لِلْعَاصِبِ <span class='punctuation'>.</span>",
-    blank1: "نَصَبَ الشَّرَكَ الْمَحْبُوكَ ________ مُحْتَرِفٌ",
+    story1: "لَمْ تَكُنْ نَجَاةُ الْهِزَبْرٌ مِنْ قَبْضَةِ الصَّيَّادِ أَمْراً هَيِّناً <span class='punctuation'>،</span>|بَلْ تَطَلَّبَتْ لِزَاماً تَظَافُرَ جُهُودِ الْحَيَوَانَاتِ قَاطِبَةً|كَيْ لَا يَقَعَ الْجَمِيعُ فَرِيسَةً لِلْغَاصِبِ <span class='punctuation'>.</span>",
+    blank1: "نَصَبَ فَخٌّ قَوِيٌّ، ________ مُحْتَرِفٌ",
     opts1: [
       {text: "أَرْنَبٌ", correct: false},
       {text: "قَنَّاصٌ", correct: true},
@@ -547,12 +558,12 @@ const levelData = {
     story2: "اجْتَمَعَتِ الْجَوَارِحُ وَالسِّبَاعُ فِي حِلْفٍ سَرِيعٍ|لِقَطْعِ الْحِبَالِ السَّمِيكَةِ|وَمُبَاغَتَةِ الصَّيَّادِ قَبْلَ فَوَاتِ الْأَوَانِ <span class='punctuation'>.</span>",
     order2: [
       {text: "تَقْيِيدُ الْأَسَدِ دَاخِلَ الْمَصْيَدَةِ الْمُحْكَمَةِ", order: 1},
-      {text: "وقُوعُ مَلِكِ الْغَابَةِ فِي شَرَكِ الْقَنَّاصِ", order: 0},
+      {text: "وقُوعُ مَلِكِ الْغَابَةِ فِي فَخٍّ الْقَنَّاصِ", order: 0},
       {text: "تَحَالُفُ السِّبَاعِ وَالْجَوَارِحِ لِمُبَاغَتَةِ الصَّيَّادِ", order: 2}
     ],
-    story3: "أَعْلَنَ الْأَسَدُ بِامْتِنَانٍ أَنَّ التَّعَاوُنَ هُوَ السِّلَاحُ الْأَقْوَى <span class='punctuation'>،</span>|وَأَنَّ الْعَزِيمَةَ الصَّادِقَةَ وَالِاتِّحَادَ|هُمَا دِرْعُ الْأَمَانِ لِجَمِيعِ سُكَّانِ الْغَابَةِ <span class='punctuation'>.</span>",
+    story3: "أَثْبَتَتِ الْمَلْحَمَةُ الْقِرَائِيَّةُ لِحَيَوَانَاتِ الْغَابَةِ <span class='punctuation'>،</span>|أَنَّ الْعَزِيمَةَ الصَّادِقَةَ وَالِاتِّحَادَ|  هُمَا دِرْعُ الْأَمَانِ لِلْمُجْتَمَعَاتِ ضِدَّ الْأَخْطَارِ الْخَفِيَّةِ  <span class='punctuation'>.</span>",
     sentence3: "الْعَزِيمَةُ الصَّادِقَةُ وَالِاتِّحَادُ هُمَا دِرْعُ الْأَمَانِ",
-    compQuestion: "مَنْ الَّذِي نَصَبَ الشَّرَكَ لِلْهِزْبَرِ؟",
+    compQuestion: "مَنْ الَّذِي نَصَبَ الفَخٍّ لِلْهِزَبْرِ؟",
     compChoices: [
       {text:"صَيَّادٌ هَاوٍ", correct:false},
       {text:"قَنَّاصٌ مُحْتَرِفٌ", correct:true},
@@ -560,6 +571,16 @@ const levelData = {
     ]
   }
 };
+
+// دالة تلوين الحركات التشكيلية لحروف الكلمات ديناميكياً
+function تلوينالحركاتالتشكيلية(word) {
+    return word
+        .replace(/\u064e/g, '<span class="fatha">\u064e</span>') // الفتحة
+        .replace(/\u064f/g, '<span class="damma">\u064f</span>') // الضمة
+        .replace(/\u0650/g, '<span class="kasra">\u0650</span>') // الكسرة
+        .replace(/\u0652/g, '<span class="sukun">\u0652</span>') // السكون
+        .replace(/\u0651/g, '<span class="shadda">\u0651</span>'); // الشدة
+}
 
 function هندسةالنصالتفاعلي(textBlock) {
     let lines = textBlock.split('|');
@@ -574,7 +595,8 @@ function هندسةالنصالتفاعلي(textBlock) {
                 let words = part.split(/(\s+)/);
                 words.forEach(word => {
                     if (word.trim().length > 0) {
-                        outputHTML += `<span class="story-word">${word}</span>`;
+                        let coloredWord = تلوينالحركاتالتشكيلية(word);
+                        outputHTML += `<span class="story-word" onclick="handleWordFocus(this)">${coloredWord}</span>`;
                     } else {
                         outputHTML += word;
                     }
@@ -584,6 +606,12 @@ function هندسةالنصالتفاعلي(textBlock) {
         outputHTML += `</span>`;
     });
     return outputHTML;
+}
+
+function handleWordFocus(element) {
+    document.querySelectorAll('.story-word').forEach(w => w.classList.remove('manual-focus'));
+    element.classList.add('manual-focus');
+    setTimeout(() => { element.classList.remove('manual-focus'); }, 1800);
 }
 
 function togglePlayAudio(key) {
@@ -877,7 +905,7 @@ function setDifficulty(level) {
   updateOrderNumbers();
 
   document.getElementById('storyText3').innerHTML = هندسةالنصالتفاعلي(data.story3);
-  document.getElementById('readSentenceTarget').innerText = `"${data.sentence3}"`;
+  document.getElementById('readSentenceTarget').innerHTML = تلوينالحركاتالتشكيلية(`"${data.sentence3}"`);
   
   const recBtn = document.getElementById('recBtn');
   recBtn.innerText = "🔴 ابْدَأْ تَسْجِيلَ قِرَاءَتِكَ (مُحَاكَاةٌ)";
@@ -1151,6 +1179,7 @@ async function toggleRecord() {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaRecorder = new MediaRecorder(stream);
       audioChunks = [];
+      state.recordStartTime = Date.now();
 
       mediaRecorder.ondataavailable = event => {
         if (event.data.size > 0) audioChunks.push(event.data);
@@ -1158,16 +1187,10 @@ async function toggleRecord() {
 
       mediaRecorder.onstop = () => {
         const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-        const timeSpentSeconds = Math.floor((Date.now() - state.startTime) / 1000);
-        const minutes = Math.floor(timeSpentSeconds / 60);
-        const seconds = timeSpentSeconds % 60;
+        const timeSpent = Math.floor((Date.now() - state.startTime) / 1000);
+        const minutes = Math.floor(timeSpent / 60);
+        const seconds = timeSpent % 60;
         const timeString = `${minutes} د و ${seconds} ث`;
-
-        // دمج حاسبة مؤشر الطلاقة العلمية (WPM) لقياس عدد الكلمات المقروءة في الدقيقة تلقائياً
-        let targetText = levelData[state.difficulty].sentence3 || "";
-        let wordCount = targetText.split(/\s+/).filter(w => w.trim().length > 0).length || 5;
-        let wpmRate = timeSpentSeconds > 0 ? Math.round((wordCount / timeSpentSeconds) * 60) : 0;
-        let fluencyDisplay = wpmRate > 0 ? `${wpmRate} كلمة/دقيقة` : "غير محدد";
 
         const reader = new FileReader();
         reader.readAsDataURL(audioBlob);
@@ -1183,8 +1206,8 @@ async function toggleRecord() {
                 level: levelData[state.difficulty].levelName,
                 score: state.correctCount, 
                 duration: timeString,
-                fluency: fluencyDisplay, // حفظ المؤشر بداخل الـ LocalStorage للأستاذة
-                audio: base64data
+                audio: base64data,
+                diagnostics: { pronunciation: false, deletion: false, repetition: false } 
             });
             localStorage.setItem('teacherRecords', JSON.stringify(records));
         };
@@ -1192,7 +1215,7 @@ async function toggleRecord() {
         fb.className = 'feedback-box info show';
         fb.innerHTML = `
           <div style="font-size:16px; margin-bottom:5px;">🎉 <strong>تَمَّ حِفْظُ قِرَاءَتِكَ بِنَجَاحٍ يَا بَطَل(َة)!</strong></div>
-          <div style="font-size:14px;">سَتَسْتَمِعُ الْأُسْتَاذَةِ إِلَى صَوْتِكَ الْجَمِيلِ لَاحِقاً لِتُقَيِّمَ تَأَلُّقَكَ.</div>
+          <div style="font-size:14px;">ستستمع الأستاذة لإبداعك الصوتي المتميز لاحقاً!</div>
         `;
 
         if(!hasRecorded) {
@@ -1225,6 +1248,23 @@ async function toggleRecord() {
     btn.innerText = 'إِعَادَةُ التَّسْجِيلِ إِذَا أَرَدْتَ 🔄';
     status.innerText = 'تَمَّ حِفْظُ الْمَقْطَعِ.';
   }
+}
+
+function toggleDiagnostic(recordId, category) {
+    let records = JSON.parse(localStorage.getItem('teacherRecords') || '[]');
+    let rec = records.find(r => String(r.id) === String(recordId));
+    if (rec) {
+        if (!rec.diagnostics) rec.diagnostics = { pronunciation: false, deletion: false, repetition: false };
+        rec.diagnostics[category] = !rec.diagnostics[category];
+        localStorage.setItem('teacherRecords', JSON.stringify(records));
+        
+        const pill = document.getElementById(`pill_${recordId}_${category}`);
+        if(pill) {
+            if(category === 'pronunciation') pill.classList.toggle('active-red');
+            if(category === 'deletion') pill.classList.toggle('active-yellow');
+            if(category === 'repetition') pill.classList.toggle('active-blue');
+        }
+    }
 }
 
 function openTeacherDashboard() {
@@ -1305,10 +1345,9 @@ function openTeacherDashboard() {
           <tr style="background: var(--bg3); color: var(--blue2); border-bottom: 2px solid var(--border);">
             <th style="padding: 12px; border: 1px solid var(--border);">التلميذ(ة)</th>
             <th style="padding: 12px; border: 1px solid var(--border);">المستوى</th>
-            <th style="padding: 12px; border: 1px solid var(--border);">النقطة</th>
-            <th style="padding: 12px; border: 1px solid var(--border);">الوقت المستغرق</th>
-            <th style="padding: 12px; border: 1px solid var(--border);">معدل الطلاقة (الانقرائية)</th>
-            <th style="padding: 12px; border: 1px solid var(--border);">التسجيل والصوت</th>
+            <th style="padding: 12px; border: 1px solid var(--border);">النقاط المحصلة</th>
+            <th style="padding: 12px; border: 1px solid var(--border);">التسجيل وصوت التلميذ</th>
+            <th style="padding: 12px; border: 1px solid var(--border);">التشخيص العيادي للأخطاء (خاص بالأستاذة)</th>
             <th style="padding: 12px; border: 1px solid var(--border);">إجراء</th>
           </tr>
         </thead>
@@ -1319,15 +1358,26 @@ function openTeacherDashboard() {
   
   recordsDisplay.forEach((rec, index) => {
     let uniqueId = rec.id || ("old_" + index);
+    
+    let diag = rec.diagnostics || { pronunciation: false, deletion: false, repetition: false };
+    let pClass = diag.pronunciation ? 'active-red' : '';
+    let dClass = diag.deletion ? 'active-yellow' : '';
+    let rClass = diag.repetition ? 'active-blue' : '';
+
     tableHTML += `
       <tr id="row_${uniqueId}" style="border-bottom: 1px solid var(--border); background: #ffffff;">
         <td style="padding: 12px; border: 1px solid var(--border); font-weight: bold; color: var(--text);">${rec.studentName || 'تلميذ(ة) تجريبي'}</td>
         <td style="padding: 12px; border: 1px solid var(--border); color: var(--muted);">${rec.level || 'مُسْتَوَى سَهْل'}</td>
-        <td style="padding: 12px; border: 1px solid var(--border); color: var(--green2); font-weight: bold;">⭐ ${rec.score} نقط</td>
-        <td style="padding: 12px; border: 1px solid var(--border); color: #3498db; font-family: monospace;">⏱️ ${rec.duration || '0 د و 45 ث'}</td>
-        <td style="padding: 12px; border: 1px solid var(--border); color: #e67e22; font-weight: bold;">📊 ${rec.fluency || 'تحت الاحتساب'}</td>
+        <td style="padding: 12px; border: 1px solid var(--border); color: var(--green2); font-weight: bold;">
+           ⭐ ${rec.score} نقط
+        </td>
         <td style="padding: 12px; border: 1px solid var(--border);">
           <audio controls src="${rec.audio}" style="height: 32px; width: 140px; vertical-align: middle;"></audio>
+        </td>
+        <td style="padding: 12px; border: 1px solid var(--border); white-space: nowrap;">
+          <span id="pill_${uniqueId}_pronunciation" class="diagnostic-pill ${pClass}" onclick="toggleDiagnostic('${uniqueId}', 'pronunciation')">🔴 لحن/تشكيل</span>
+          <span id="pill_${uniqueId}_deletion" class="diagnostic-pill ${dClass}" onclick="toggleDiagnostic('${uniqueId}', 'deletion')">🟡 حذف كلمة</span>
+          <span id="pill_${uniqueId}_repetition" class="diagnostic-pill ${rClass}" onclick="toggleDiagnostic('${uniqueId}', 'repetition')">🔵 تكرار</span>
         </td>
         <td style="padding: 12px; border: 1px solid var(--border);">
           <button class="btn-delete-row" onclick="deleteSingleRecord('${uniqueId}')">🗑️ حذف</button>
@@ -1341,7 +1391,7 @@ function openTeacherDashboard() {
 }
 
 function deleteSingleRecord(id) {
-    if(confirm("هل أنتِ متأكدة من حذف محاولة هذا المتعلم نهائياً؟")) {
+    if(confirm("هل أنتِ متأكدة من حذف محاولة  المتعلم نهائياً؟")) {
         let records = JSON.parse(localStorage.getItem('teacherRecords') || '[]');
         let recordsDisplay = [...records].reverse();
         let originalIndex = -1;
@@ -1369,11 +1419,11 @@ function exportRecordsToCSV() {
     }
     
     let csvContent = "\uFEFF"; 
-    csvContent += "اسم التلميذ(ة),المستوى,النقاط المحصلة,الوقت المستغرق,معدل الطلاقة,التاريخ والوقت\n";
+    csvContent += "اسم التلميذ(ة),المستوى,النقاط المحصلة,التاريخ والوقت\n";
     
     records.forEach(r => {
         let cleanName = (r.studentName || 'تلميذ تجريبي').replace(/,/g, '-'); 
-        csvContent += `${cleanName},${r.level},${r.score} نقاط,${r.duration},${r.fluency || 'غير محدد'},${r.date}\n`;
+        csvContent += `${cleanName},${r.level},${r.score} نقاط,${r.date}\n`;
     });
     
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -1463,7 +1513,7 @@ document.getElementById("appTitle").addEventListener("click", function () {
     teacherSecretClicks++;
     if (teacherSecretClicks === 5) {
         document.getElementById("teacherBtn").style.display = "inline-block";
-        alert("👩‍🏫 تم تفعيل وضع الأستاذة");
+        alert("👩‍🏫 تم تفعيل وضع الأستاذة بنجاح");
         teacherSecretClicks = 0;
         setTimeout(() => {
             let btn = document.getElementById("teacherBtn");
